@@ -1975,17 +1975,7 @@ function submitAddTask() {
 
 //  SESSION
 function init() {
-  if (SCRIPT_URL) {
-    // Load real user list from backend before showing login
-    api('getUsers', {}).then(function(res) {
-      if (res.users && res.users.length) DEMO_USERS = res.users;
-      _initLogin();
-    }).catch(function() {
-      _initLogin(); // fallback to built-in DEMO_USERS on network error
-    });
-  } else {
-    _initLogin();
-  }
+  _initLogin();
 }
 
 function _initLogin() {
