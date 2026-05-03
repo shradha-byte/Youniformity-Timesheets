@@ -2646,7 +2646,29 @@ var LEAVE_POLICY = {
     desc:'3 days per year for unforeseen emergencies. No prior approval needed.' }
 };
 
-function populateLeaveSelects() {
+function buildLeaveUsedMap(approved) {
+  var used = {};
+  var _now = new Date();
+  var _jan1 = new Date(_now.getFullYear(),0,1);
+  var _wkNow = Math.ceil(((_now-_jan1)/86400000+_jan1.getDay()+1)/7);
+  var _doyNow = Math.ceil((_now-_jan1)/86400000);
+  approved.forEach(function(l) {
+    var p = LEAVE_POLICY[l.type];
+    if (p && p.uselose) {
+      var ld = new Date(l.from + 'T12:00:00');
+      var _jan1l = new Date(ld.getFullYear(),0,1);
+      var ok = false;
+      if (p.accrual === 'monthly')      ok = ld.getFullYear()===_now.getFullYear() && ld.getMonth()===_now.getMonth();
+      else if (p.accrual === 'weekly')  { var wkL=Math.ceil(((ld-_jan1l)/86400000+_jan1l.getDay()+1)/7); ok=ld.getFullYear()===_now.getFullYear()&&wkL===_wkNow; }
+      else if (p.accrual === 'fortnightly') { var doyL=Math.ceil((ld-_jan1l)/86400000); ok=ld.getFullYear()===_now.getFullYear()&&Math.floor(doyL/15)===Math.floor(_doyNow/15); }
+      if (!ok) return;
+    }
+    used[l.type] = (used[l.type] || 0) + (l.days ? parseFloat(l.days) : countLeaveDays(l.from, l.to, false));
+  });
+  return used;
+}
+
+function populateLeaveSelects(usedMap) {
   // Build filtered option list based on current user gender
   var gender = currentUser ? (currentUser.gender || 'all') : 'all';
   var opts = '<option value="">-- Select Type --</option>';
@@ -2655,8 +2677,18 @@ function populateLeaveSelects() {
     var p = LEAVE_POLICY[type];
     if (p.gender === 'female' && gender !== 'female') return;
     if (p.gender === 'male'   && gender !== 'male')   return;
-    opts       += '<option>' + type + '</option>';
-    filterOpts += '<option>' + type + '</option>';
+    var label = type;
+    var exhausted = false;
+    if (usedMap) {
+      var accrued = computeAccrued(type);
+      var balance = Math.max(0, accrued - (usedMap[type] || 0));
+      label = type + ' (' + balance + (balance === 1 ? ' day' : ' days') + ' left)';
+      if (balance <= 0) exhausted = true;
+    }
+    var disAttr = exhausted ? ' disabled' : '';
+    var styleAttr = exhausted ? ' style="color:#9CA3AF"' : '';
+    opts       += '<option value="' + type + '"' + disAttr + styleAttr + '>' + label + '</option>';
+    filterOpts += '<option value="' + type + '">' + type + '</option>';
   });
   var sel = document.getElementById('leave-type');
   if (sel) sel.innerHTML = opts;
@@ -2691,24 +2723,7 @@ function computeLeaveBalance() {
   if (!grid) return;
   api('getMyLeaves', {name: currentUser.name}).then(function(res) {
     var approved = (res.leaves || []).filter(function(l){ return l.status === 'approved'; });
-    var used = {};
-    var _now = new Date();
-    var _jan1 = new Date(_now.getFullYear(),0,1);
-    var _wkNow = Math.ceil(((_now-_jan1)/86400000+_jan1.getDay()+1)/7);
-    var _doyNow = Math.ceil((_now-_jan1)/86400000);
-    approved.forEach(function(l) {
-      var p = LEAVE_POLICY[l.type];
-      if (p && p.uselose) {
-        var ld = new Date(l.from + 'T12:00:00');
-        var _jan1l = new Date(ld.getFullYear(),0,1);
-        var ok = false;
-        if (p.accrual === 'monthly')      ok = ld.getFullYear()===_now.getFullYear() && ld.getMonth()===_now.getMonth();
-        else if (p.accrual === 'weekly')  { var wkL=Math.ceil(((ld-_jan1l)/86400000+_jan1l.getDay()+1)/7); ok=ld.getFullYear()===_now.getFullYear()&&wkL===_wkNow; }
-        else if (p.accrual === 'fortnightly') { var doyL=Math.ceil((ld-_jan1l)/86400000); ok=ld.getFullYear()===_now.getFullYear()&&Math.floor(doyL/15)===Math.floor(_doyNow/15); }
-        if (!ok) return;
-      }
-      used[l.type] = (used[l.type] || 0) + (l.days ? parseFloat(l.days) : countLeaveDays(l.from, l.to, false));
-    });
+    var used = buildLeaveUsedMap(approved);
     var cards = '';
     Object.keys(LEAVE_POLICY).forEach(function(type) {
       var p = LEAVE_POLICY[type];
@@ -2816,6 +2831,15 @@ function openLeaveModal() {
   var tp = document.getElementById('leave-type');
   if (tp) { tp.value = ''; onLeaveTypeChange(tp); }
   openModal('modal-leave');
+  if (currentUser) {
+    api('getMyLeaves', {name: currentUser.name}).then(function(res) {
+      var approved = (res.leaves || []).filter(function(l){ return l.status === 'approved'; });
+      var prevVal = document.getElementById('leave-type') ? document.getElementById('leave-type').value : '';
+      populateLeaveSelects(buildLeaveUsedMap(approved));
+      var sel = document.getElementById('leave-type');
+      if (sel && prevVal) { sel.value = prevVal; onLeaveTypeChange(sel); }
+    }).catch(function(){});
+  }
 }
 
 function submitLeave() {
