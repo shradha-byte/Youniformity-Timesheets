@@ -760,12 +760,11 @@ textarea{resize:vertical;min-height:70px}
           <div id="recent-activity"><div class="empty"><div class="spinner"></div></div></div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">Announcements</div></div>
-          <div id="announcements-list">
-            <div class="announce-item"><div class="announce-dot"></div><div><div class="announce-title">Q2 Timesheet Deadline</div><div class="announce-body">Please ensure all April logs are submitted and approved by April 30, 2026.</div><div class="announce-date">Apr 12, 2026</div></div></div>
-            <div class="announce-item"><div class="announce-dot" style="background:var(--gold)"></div><div><div class="announce-title">Team Outing &mdash; May</div><div class="announce-body">Company outing planned for mid-May. Stay tuned for details from HR.</div><div class="announce-date">Apr 10, 2026</div></div></div>
-            <div class="announce-item"><div class="announce-dot" style="background:var(--blue)"></div><div><div class="announce-title">New WFH Policy Update</div><div class="announce-body">WFH days are now trackable directly in the timesheet portal.</div><div class="announce-date">Apr 5, 2026</div></div></div>
+          <div class="card-header">
+            <div class="card-title">Announcements</div>
+            <button id="btn-post-announcement" class="btn btn-gold" style="display:none;padding:4px 12px;font-size:12px" onclick="openPostAnnouncement()">+ Post</button>
           </div>
+          <div id="announcements-list"></div>
         </div>
       </div>
     </div>
@@ -1421,6 +1420,38 @@ textarea{resize:vertical;min-height:70px}
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modal-add-task')">Cancel</button>
       <button class="btn btn-gold" onclick="submitAddTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ANNOUNCEMENT -->
+<div class="overlay" id="modal-announcement">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <div class="modal-title">Post Announcement</div>
+      <button class="modal-close" onclick="closeModal('modal-announcement')">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input id="ann-title" class="form-input" type="text" placeholder="Announcement title" maxlength="80">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Body</label>
+        <textarea id="ann-body" class="form-input" rows="3" placeholder="Announcement details..." style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dot Colour</label>
+        <select id="ann-color" class="form-input">
+          <option value="var(--brand)">Green (default)</option>
+          <option value="var(--gold)">Gold</option>
+          <option value="var(--blue)">Blue</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-announcement')">Cancel</button>
+      <button class="btn btn-gold" onclick="submitAnnouncement()">Post</button>
     </div>
   </div>
 </div>
@@ -2184,6 +2215,7 @@ function showApp() {
   setupBanner();
   setupNextHoliday();
   loadDashboardStats();
+  loadAnnouncements();
   loadMyTasks();
   loadMoodToday();
   renderWeek();
@@ -2716,6 +2748,91 @@ function countLeaveDays(from, to, halfDay) {
   while (d <= t) { var dow = d.getDay(); if (dow !== 0 && dow !== 6) days++; d.setDate(d.getDate()+1); }
   return Math.max(1, days);
 }
+
+// ── Announcements ──────────────────────────────────────────────────────────
+var SEED_ANNOUNCEMENTS = [
+  {id:'ann_1', title:'Q2 Timesheet Deadline', body:'Please ensure all April logs are submitted and approved by April 30, 2026.', date:'Apr 12, 2026', dotColor:'var(--brand)'},
+  {id:'ann_2', title:'Team Outing — May', body:'Company outing planned for mid-May. Stay tuned for details from HR.', date:'Apr 10, 2026', dotColor:'var(--gold)'},
+  {id:'ann_3', title:'New WFH Policy Update', body:'WFH days are now trackable directly in the timesheet portal.', date:'Apr 5, 2026', dotColor:'var(--blue)'}
+];
+
+function canManageAnnouncements() {
+  if (!currentUser) return false;
+  if (currentUser.role === 'admin') return true;
+  return currentUser.name === 'Shradha Prakash' || currentUser.name === 'Achraj Prakash';
+}
+
+function getAnnouncements() {
+  var raw = localStorage.getItem('yt_announcements');
+  if (!raw) {
+    localStorage.setItem('yt_announcements', JSON.stringify(SEED_ANNOUNCEMENTS));
+    return SEED_ANNOUNCEMENTS.slice();
+  }
+  try { return JSON.parse(raw); } catch(e) { return []; }
+}
+
+function loadAnnouncements() {
+  var list = document.getElementById('announcements-list');
+  if (!list) return;
+  var btn = document.getElementById('btn-post-announcement');
+  if (btn) btn.style.display = canManageAnnouncements() ? '' : 'none';
+  var items = getAnnouncements();
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">No announcements yet.</div>';
+    return;
+  }
+  var canDel = canManageAnnouncements();
+  list.innerHTML = items.map(function(a) {
+    var delBtn = canDel
+      ? '<button onclick="deleteAnnouncement(\'' + a.id + '\')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:16px;line-height:1;padding:0 2px" title="Delete">&times;</button>'
+      : '';
+    return '<div class="announce-item" style="align-items:flex-start">'
+      + '<div class="announce-dot" style="background:' + (a.dotColor || 'var(--brand)') + ';flex-shrink:0;margin-top:4px"></div>'
+      + '<div style="flex:1">'
+      + '<div class="announce-title">' + escHtml(a.title) + '</div>'
+      + '<div class="announce-body">' + escHtml(a.body) + '</div>'
+      + '<div class="announce-date">' + escHtml(a.date) + '</div>'
+      + '</div>'
+      + delBtn
+      + '</div>';
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openPostAnnouncement() {
+  var t = document.getElementById('ann-title'); if (t) t.value = '';
+  var b = document.getElementById('ann-body');  if (b) b.value = '';
+  var c = document.getElementById('ann-color'); if (c) c.value = 'var(--brand)';
+  openModal('modal-announcement');
+}
+
+function submitAnnouncement() {
+  var title = (document.getElementById('ann-title').value || '').trim();
+  var body  = (document.getElementById('ann-body').value  || '').trim();
+  var color = document.getElementById('ann-color').value;
+  if (!title) { toast('Please enter a title', 'error'); return; }
+  if (!body)  { toast('Please enter announcement details', 'error'); return; }
+  var items = getAnnouncements();
+  var now = new Date();
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dateStr = months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+  items.unshift({id: 'ann_' + Date.now(), title: title, body: body, date: dateStr, dotColor: color});
+  localStorage.setItem('yt_announcements', JSON.stringify(items));
+  closeModal('modal-announcement');
+  loadAnnouncements();
+  toast('Announcement posted', 'success');
+}
+
+function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement?')) return;
+  var items = getAnnouncements().filter(function(a){ return a.id !== id; });
+  localStorage.setItem('yt_announcements', JSON.stringify(items));
+  loadAnnouncements();
+}
+// ───────────────────────────────────────────────────────────────────────────
 
 function computeLeaveBalance() {
   populateLeaveSelects();
