@@ -747,7 +747,7 @@ textarea{resize:vertical;min-height:70px}
         <div class="quick-action" onclick="openLeaveModal()"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Apply Leave</div><div class="qa-sub">Request time off</div></div>
         <div class="quick-action" onclick="go('focus')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Focus Timer</div><div class="qa-sub">Pomodoro session</div></div>
         <div class="quick-action" onclick="go('history')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">My History</div><div class="qa-sub">View past logs</div></div>
-        <div class="quick-action" onclick="go('holidays')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Holidays</div><div class="qa-sub" id="holiday-qa-sub">2026 calendar</div></div>
+        <div class="quick-action" onclick="go('holidays')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Holidays</div><div class="qa-sub" id="holiday-qa-sub">FY 2026-27 calendar</div></div>
         <div class="quick-action" onclick="go('profile')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">My Profile</div><div class="qa-sub">Stats & summary</div></div>
       </div>
 
@@ -1042,9 +1042,9 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
 <div class="view" id="view-holidays">
-      <div class="page-header"><div class="page-title" id="holiday-page-title">Holiday Calendar 2026</div><div class="page-sub">Indian public &amp; national holidays</div></div>
+      <div class="page-header"><div class="page-title" id="holiday-page-title">Holiday Calendar FY 2026-27</div><div class="page-sub">Indian public &amp; national holidays</div></div>
       <div class="card" style="margin-bottom:18px">
-        <div class="card-header"><div class="card-title" id="holiday-card-title">All Holidays &mdash; 2026</div></div>
+        <div class="card-header"><div class="card-title" id="holiday-card-title">All Holidays &mdash; FY 2026-27</div></div>
         <div id="upcoming-list" class="upcoming-list"></div>
       </div>
       <div class="holiday-grid" id="holiday-cal-grid"></div>
@@ -1659,43 +1659,60 @@ var _HOL_FALLBACK_2026 = {
 
 var _HOL_NATIONAL_KW = ['New Year','Republic','Independence','Gandhi','Labour','Maharashtra','Ambedkar','Christmas','Baisakhi'];
 
+// Returns current Indian Financial Year info (Apr 1 – Mar 31)
+function getFY() {
+  var now = new Date(), mo = now.getMonth(), yr = now.getFullYear();
+  var fyStart = mo >= 3 ? yr : yr - 1; // April (month index 3) begins new FY
+  return { start: fyStart, end: fyStart + 1, label: 'FY ' + fyStart + '-' + String(fyStart + 1).slice(-2) };
+}
+
 var HOLIDAYS = {};
 (function(){
-  var yr = new Date().getFullYear();
-  if (yr === 2026) {
-    HOLIDAYS = Object.assign({}, _HOL_FALLBACK_2026);
+  var fy = getFY();
+  if (fy.start === 2026) {
+    Object.assign(HOLIDAYS, _HOL_FALLBACK_2026);
   } else {
-    // For future years: show fixed national holidays until API loads
     Object.keys(_HOL_FIXED).forEach(function(mmdd){
-      HOLIDAYS[yr+'-'+mmdd] = _HOL_FIXED[mmdd];
+      HOLIDAYS[fy.start + '-' + mmdd] = _HOL_FIXED[mmdd];
     });
   }
+  // Seed year-2 (Jan–Mar) with fixed national holidays as baseline until API loads
+  Object.keys(_HOL_FIXED).forEach(function(mmdd){
+    var key = fy.end + '-' + mmdd;
+    if (!HOLIDAYS[key]) HOLIDAYS[key] = _HOL_FIXED[mmdd];
+  });
 })();
 
 function loadHolidays() {
-  var year = new Date().getFullYear();
-  var yr = String(year);
+  var fy = getFY();
+  var fyLabel = fy.label;
   ['holiday-page-title','holiday-card-title'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.textContent=el.textContent.replace(/\d{4}/,yr);
+    var el = document.getElementById(id);
+    if (el) el.textContent = el.textContent.replace(/(?:FY\s*)?\d{4}(?:-\d{2,4})?/, fyLabel);
   });
-  var qs=document.getElementById('holiday-qa-sub'); if(qs) qs.textContent=yr+' calendar';
+  var qs = document.getElementById('holiday-qa-sub');
+  if (qs) qs.textContent = fyLabel + ' calendar';
 
-  fetch('https://date.nager.at/api/v3/PublicHolidays/'+year+'/IN')
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(!Array.isArray(data)||data.length===0) return;
-      // MERGE: API fills in national dates; our curated religious holidays are kept
+  // Fetch both calendar years that make up this FY
+  Promise.all([fy.start, fy.end].map(function(year){
+    return fetch('https://date.nager.at/api/v3/PublicHolidays/' + year + '/IN')
+      .then(function(r){ return r.json(); })
+      .catch(function(){ return []; });
+  })).then(function(results){
+    results.forEach(function(data){
+      if (!Array.isArray(data) || data.length === 0) return;
+      // MERGE: API fills in national dates; curated religious holidays are kept
       data.forEach(function(e){
-        var isNat=_HOL_NATIONAL_KW.some(function(k){ return e.name.indexOf(k)>=0; });
-        if(isNat || !HOLIDAYS[e.date]){
-          HOLIDAYS[e.date]={name:e.name, type:isNat?'national':'religious'};
+        var isNat = _HOL_NATIONAL_KW.some(function(k){ return e.name.indexOf(k) >= 0; });
+        if (isNat || !HOLIDAYS[e.date]) {
+          HOLIDAYS[e.date] = {name: e.name, type: isNat ? 'national' : 'religious'};
         }
       });
-      setupNextHoliday();
-      var hv=document.getElementById('view-holidays');
-      if(hv&&hv.classList.contains('active')) renderHolidayTab();
-    })
-    .catch(function(){});
+    });
+    setupNextHoliday();
+    var hv = document.getElementById('view-holidays');
+    if (hv && hv.classList.contains('active')) renderHolidayTab();
+  }).catch(function(){});
 }
 loadHolidays();
 
@@ -3188,7 +3205,8 @@ function renderHolidayTab() { renderUpcomingList(); renderMiniCalendars(); }
 
 function renderUpcomingList() {
   var today=new Date().toISOString().slice(0,10);
-  var all=Object.entries(HOLIDAYS).sort(function(a,b){return a[0].localeCompare(b[0]);});
+  var fy=getFY(), fyS=fy.start+'-04-01', fyE=fy.end+'-03-31';
+  var all=Object.entries(HOLIDAYS).filter(function(e){ return e[0]>=fyS&&e[0]<=fyE; }).sort(function(a,b){return a[0].localeCompare(b[0]);});
   var c=document.getElementById('upcoming-list'); if(!c) return;
   var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   c.innerHTML=all.map(function(e){
@@ -3203,10 +3221,12 @@ function renderUpcomingList() {
 function renderMiniCalendars() {
   var grid=document.getElementById('holiday-cal-grid'); if(!grid) return;
   grid.innerHTML='';
-  var now=new Date();
-  for(var off=-1;off<=2;off++){
-    var d=new Date(now.getFullYear(),now.getMonth()+off,1);
-    grid.appendChild(buildMiniCal(d.getFullYear(),d.getMonth()));
+  var fy=getFY();
+  // Show all 12 months of the FY: April (fyStart) through March (fyEnd)
+  for(var i=0;i<12;i++){
+    var month=(3+i)%12; // Apr=3..Dec=11, then Jan=0..Mar=2
+    var year=i<=8?fy.start:fy.end;
+    grid.appendChild(buildMiniCal(year,month));
   }
 }
 
