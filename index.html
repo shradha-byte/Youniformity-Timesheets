@@ -2750,11 +2750,7 @@ function countLeaveDays(from, to, halfDay) {
 }
 
 // ── Announcements ──────────────────────────────────────────────────────────
-var SEED_ANNOUNCEMENTS = [
-  {id:'ann_1', title:'Q2 Timesheet Deadline', body:'Please ensure all April logs are submitted and approved by April 30, 2026.', date:'Apr 12, 2026', dotColor:'var(--brand)'},
-  {id:'ann_2', title:'Team Outing — May', body:'Company outing planned for mid-May. Stay tuned for details from HR.', date:'Apr 10, 2026', dotColor:'var(--gold)'},
-  {id:'ann_3', title:'New WFH Policy Update', body:'WFH days are now trackable directly in the timesheet portal.', date:'Apr 5, 2026', dotColor:'var(--blue)'}
-];
+var SEED_ANNOUNCEMENTS = [];
 
 function canManageAnnouncements() {
   if (!currentUser) return false;
@@ -2763,11 +2759,8 @@ function canManageAnnouncements() {
 }
 
 function getAnnouncements() {
-  var raw = localStorage.getItem('yt_announcements');
-  if (!raw) {
-    localStorage.setItem('yt_announcements', JSON.stringify(SEED_ANNOUNCEMENTS));
-    return SEED_ANNOUNCEMENTS.slice();
-  }
+  var raw = localStorage.getItem('yt_announcements_v2');
+  if (!raw) return [];
   try { return JSON.parse(raw); } catch(e) { return []; }
 }
 
@@ -2820,7 +2813,7 @@ function submitAnnouncement() {
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var dateStr = months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
   items.unshift({id: 'ann_' + Date.now(), title: title, body: body, date: dateStr, dotColor: color});
-  localStorage.setItem('yt_announcements', JSON.stringify(items));
+  localStorage.setItem('yt_announcements_v2', JSON.stringify(items));
   closeModal('modal-announcement');
   loadAnnouncements();
   toast('Announcement posted', 'success');
@@ -2829,7 +2822,7 @@ function submitAnnouncement() {
 function deleteAnnouncement(id) {
   if (!confirm('Delete this announcement?')) return;
   var items = getAnnouncements().filter(function(a){ return a.id !== id; });
-  localStorage.setItem('yt_announcements', JSON.stringify(items));
+  localStorage.setItem('yt_announcements_v2', JSON.stringify(items));
   loadAnnouncements();
 }
 // ───────────────────────────────────────────────────────────────────────────
