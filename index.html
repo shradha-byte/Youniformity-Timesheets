@@ -1366,7 +1366,7 @@ textarea{resize:vertical;min-height:70px}
           <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
         </div>
         <div class="settings-row">
-          <div><div class="settings-label">Clear Demo Data</div><div class="settings-sub">Reset all localStorage timesheet entries</div></div>
+          <div><div class="settings-label">Clear All Data</div><div class="settings-sub">Reset timesheets, projects, and announcements from localStorage</div></div>
           <button class="btn btn-danger btn-sm" onclick="clearDemoData()">Clear Data</button>
         </div>
       </div>
@@ -1749,7 +1749,14 @@ function loadHolidays() {
 }
 loadHolidays();
 
-//  DEMO DATA 
+// One-time cleanup: remove placeholder demo data seeded in earlier versions
+if (!localStorage.getItem('yt_cleaned_v1')) {
+  localStorage.removeItem('yt_projects');
+  localStorage.removeItem('yt_announcements_v2');
+  localStorage.setItem('yt_cleaned_v1', '1');
+}
+
+//  DEMO DATA
 var DEMO_USERS = [
   {name:'Mamta Kumar',     email:'md@youniformity.co.in',    dept:'Leadership',             type:'Full-time', role:'admin',    reportsTo:null,            gender:'female'},
   {name:'Manoj Kumar',     email:'manoj@youniformity.co.in',    dept:'Leadership',             type:'Full-time', role:'admin',    reportsTo:'Mamta Kumar'},
@@ -4250,9 +4257,12 @@ function exportCSV() {
 }
 
 function clearDemoData() {
-  if (!confirm('Clear all demo timesheet data from localStorage? This cannot be undone.')) return;
+  if (!confirm('Clear ALL app data from localStorage (timesheets, projects, announcements)? This cannot be undone.')) return;
   localStorage.removeItem('yt_logs');
-  toast('Demo data cleared', 'success');
+  localStorage.removeItem('yt_projects');
+  localStorage.removeItem('yt_announcements_v2');
+  toast('All data cleared', 'success');
+  setTimeout(() => location.reload(), 800);
 }
 
 // ========== ADMIN PIN ==========
