@@ -1763,15 +1763,7 @@ var DEMO_USERS = [
   {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',  dept:'Marketing & Brand',     type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia'}
 ];
 
-var DEMO_PROJECTS = [
-  {id:'p1', name:'EcoVadis Bronze Certification',  client:'Mahindra Group',   dept:'Consulting & Delivery', deadline:'2026-05-31', assignedTo:['Shradha Prakash','Nusrath'],      createdBy:'Achraj Prakash', status:'active', stage:'Active'},
-  {id:'p2', name:'Carbon Footprint Assessment Q1', client:'Tata Chemicals',   dept:'Consulting & Delivery', deadline:'2026-04-30', assignedTo:['Shradha Prakash'],               createdBy:'Achraj Prakash', status:'active', stage:'Review'},
-  {id:'p3', name:'BD Lead Pipeline Q2',            client:'Internal',         dept:'Business Development',  deadline:'2026-06-30', assignedTo:['Achraj Prakash','Anhad Seth'],   createdBy:'Mamta Kumar',    status:'active', stage:'Active'},
-  {id:'p4', name:'Client Onboarding FY26',         client:'Multiple Clients', dept:'Client Success',        deadline:'2026-07-31', assignedTo:['Aarsh Bhatia'],                  createdBy:'Mamta Kumar',    status:'active', stage:'Scoping'},
-  {id:'p5', name:'Brand Refresh Campaign',         client:'Internal',         dept:'Marketing & Brand',     deadline:'2026-05-15', assignedTo:['Runjhun Bhatia','Dhairya Jain'], createdBy:'Mamta Kumar',    status:'active', stage:'Design'},
-  {id:'p6', name:'ESG Dashboard v2.0',             client:'Internal',         dept:'Technology & AI',       deadline:'2026-06-30', assignedTo:['Nandini'],                       createdBy:'Manoj Kumar',    status:'active', stage:'Scoping'},
-  {id:'p7', name:'Sustainability Report FY25',     client:'HUL',              dept:'Consulting & Delivery', deadline:'2026-07-15', assignedTo:['Shradha Prakash','Nandini'],     createdBy:'Mamta Kumar',    status:'active', stage:'Delivered'}
-];
+var DEMO_PROJECTS = [];
 
 var DEPT_TASKS = {
   'Business Development':  ['Client Outreach & Lead Generation','Proposal & Pitch Deck Preparation','CRM Data Management','Market Research','Invoice & Billing Follow-up'],
@@ -1808,12 +1800,12 @@ function localApi(action, p) {
 
   if (action === 'getUsers') return { users: DEMO_USERS };
   if (action === 'getProjects') {
-    var projs = JSON.parse(localStorage.getItem('yt_projects') || 'null') || DEMO_PROJECTS;
+    var projs = JSON.parse(localStorage.getItem('yt_projects') || 'null') || [];
     if (p.name) projs = projs.filter(function(pr){ return pr.assignedTo.indexOf(p.name) > -1; });
     return { projects: projs };
   }
   if (action === 'saveProject') {
-    var projs2 = JSON.parse(localStorage.getItem('yt_projects') || 'null') || DEMO_PROJECTS.slice();
+    var projs2 = JSON.parse(localStorage.getItem('yt_projects') || 'null') || [];
     var idx2 = projs2.findIndex(function(pr){ return pr.id === p.id; });
     var proj = {id: p.id || 'p_'+Date.now(), name:p.name, client:p.client, dept:p.dept, deadline:p.deadline,
       assignedTo: typeof p.assignedTo === 'string' ? JSON.parse(p.assignedTo) : (p.assignedTo||[]),
@@ -2750,7 +2742,6 @@ function countLeaveDays(from, to, halfDay) {
 }
 
 // ── Announcements ──────────────────────────────────────────────────────────
-var SEED_ANNOUNCEMENTS = [];
 
 function canManageAnnouncements() {
   if (!currentUser) return false;
@@ -3581,7 +3572,7 @@ init();
 function loadOverview() {
   api('getProjects', {}).then(function(res){
     var projs = res.projects || [];
-    if (!projs.length) projs = DEMO_PROJECTS;
+
     var deptEl = document.getElementById('overview-dept');
     var dept = deptEl ? deptEl.value : '';
     if (dept) projs = projs.filter(function(p){ return p.dept === dept; });
