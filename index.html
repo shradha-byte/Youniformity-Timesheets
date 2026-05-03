@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Youniformity &mdash; My Timesheet</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex, nofollow">
+<title>Youniformity &#x2014; My Timesheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231A5C2E'/><text y='22' x='6' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>Y</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -19,7 +23,7 @@
   --sidebar-w:220px;
   --shadow-sm:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 16px rgba(0,0,0,.08);--shadow-lg:0 8px 32px rgba(0,0,0,.12);
 }
-body{font-family:'DM Sans','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text-body);-webkit-font-smoothing:antialiased;min-height:100vh}
+body{font-family:'DM Sans','Noto Sans JP','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text-body);-webkit-font-smoothing:antialiased;min-height:100vh}
 /* TOPBAR */
 .topbar{background:var(--navy);border-bottom:3px solid var(--brand);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:fixed;top:0;left:0;right:0;z-index:100}
 .logo-block{display:flex;align-items:center;gap:10px}
@@ -515,6 +519,7 @@ textarea{resize:vertical;min-height:70px}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+<noscript><div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#EEF1F5;font-family:sans-serif;text-align:center;padding:24px;z-index:9999"><div style="background:#fff;border-radius:12px;border-left:4px solid #1A5C2E;padding:32px 40px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.12)"><div style="font-size:22px;font-weight:800;color:#1A1A2E;margin-bottom:8px">JavaScript Required</div><div style="font-size:14px;color:#6B7280;line-height:1.6">The Youniformity Employee Portal requires JavaScript to run. Please enable JavaScript in your browser settings and reload the page.</div></div></div></noscript>
 <!-- NAME SCREEN -->
 <div id="name-screen" class="name-screen">
   <div class="name-card">
@@ -1206,10 +1211,10 @@ textarea{resize:vertical;min-height:70px}
           <div><div class="page-title">Project Pipeline</div><div class="page-sub">Visual overview of all projects across delivery stages</div></div>
           <select id="overview-dept" onchange="loadOverview()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit">
             <option value="">All Departments</option>
-            <option value="Revenue & Operations">Revenue &amp; Operations</option>
-            <option value="Consulting & Delivery">Consulting &amp; Delivery</option>
-            <option value="Growth & Engagement">Growth &amp; Engagement</option>
-            <option value="Design & Brand">Design &amp; Brand</option>
+            <option value="Revenue &amp; Operations">Revenue &amp; Operations</option>
+            <option value="Consulting &amp; Delivery">Consulting &amp; Delivery</option>
+            <option value="Growth &amp; Engagement">Growth &amp; Engagement</option>
+            <option value="Design &amp; Brand">Design &amp; Brand</option>
           </select>
         </div>
       </div>
@@ -1590,12 +1595,15 @@ textarea{resize:vertical;min-height:70px}
 <div class="toast" id="toast"><span id="toast-text"></span></div><script>
 //  CONFIG 
 // ── Paste your deployed GAS Web App URL here ──────────────────────
-var SCRIPT_URL = 'https://script.google.com/a/macros/youniformity.co.in/s/AKfycbw9FUlt2DgUD3HD0uZcqoLO7aOJLojTamZdO4C2Xlb8mx9t3ove8bUDztYvuoQJGqEzkg/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNAvwdmyJPVmglJguW-b2PA5DkewDtDYedatiHv7p92RMwvx_exwCqtb2Me8svRvOHJA/exec';
 // ──────────────────────────────────────────────────────────────────
-// Auto-detect when the page is served directly by GAS itself
-if (!SCRIPT_URL && window.location.href.indexOf('/exec') > -1) {
-  SCRIPT_URL = window.location.href.split('?')[0];
-}
+// To connect a backend later, paste a deployed web-app URL into SCRIPT_URL above
+// Hide the DEMO badge when a live backend URL is configured
+document.addEventListener('DOMContentLoaded', function() {
+  if (SCRIPT_URL) {
+    document.querySelectorAll('.demo-pill').forEach(function(el) { el.style.display = 'none'; });
+  }
+});
 // ── Google OAuth 2.0 Client ID ────────────────────────────────────
 // How to set up:
 //   1. Go to https://console.cloud.google.com → APIs & Services → Credentials
@@ -1625,8 +1633,8 @@ var HOLIDAYS = {
   '2026-08-15':{name:'Independence Day',type:'national'},
   '2026-09-07':{name:'Janmashtami',type:'religious'},
   '2026-10-02':{name:'Gandhi Jayanti / Dussehra',type:'national'},
-  '2026-10-28':{name:'Diwali &mdash; Lakshmi Puja',type:'religious'},
-  '2026-10-29':{name:'Diwali &mdash; Govardhan Puja',type:'religious'},
+  '2026-10-28':{name:'Diwali — Lakshmi Puja',type:'religious'},
+  '2026-10-29':{name:'Diwali — Govardhan Puja',type:'religious'},
   '2026-11-14':{name:'Guru Nanak Jayanti',type:'religious'},
   '2026-12-25':{name:'Christmas Day',type:'national'}
 };
@@ -1664,8 +1672,9 @@ var DEPT_TASKS = {
   'Leadership':            ['Strategic Planning','Board Reporting','Partner Meetings','Team Reviews','Investor & Fundraising Relations']
 };
 
-//  STATE 
+//  STATE
 var currentUser  = null;
+var currentIdToken = null;
 var myTasks      = [];
 var activeTaskDate = null;
 var weekLogsCache  = {};
@@ -1676,9 +1685,10 @@ function api(action, payload) {
   payload = payload || {};
   if (!SCRIPT_URL) return Promise.resolve(localApi(action, payload));
   var params = new URLSearchParams(Object.assign({ action: action }, payload));
+  if (currentIdToken) params.set('token', currentIdToken);
   return fetch(SCRIPT_URL + '?' + params.toString(), { redirect: 'follow' })
-    .then(function(r){ return r.json(); })
-    .catch(function(e){ toast('Connection error','error'); return { error: e.message }; });
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .catch(function(e){ toast('Connection error — check your network or contact admin','error'); return { error: e.message }; });
 }
 
 function localApi(action, p) {
@@ -2041,6 +2051,7 @@ function startSession() {
 }
 
 function handleGoogleCredential(response) {
+  currentIdToken = response.credential;
   try {
     var parts = response.credential.split('.');
     var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -2164,7 +2175,7 @@ function setupNextHoliday() {
   var diff=Math.ceil((d-new Date())/86400000);
   el=document.getElementById('nhc-name'); if(el) el.textContent=h.name;
   var dtxt=d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
-  if(diff===0) dtxt+=' &mdash; Today!'; else if(diff===1) dtxt+=' &mdash; Tomorrow'; else dtxt+=' &mdash; in '+diff+' days';
+  if(diff===0) dtxt+=' — Today!'; else if(diff===1) dtxt+=' — Tomorrow'; else dtxt+=' — in '+diff+' days';
   el=document.getElementById('nhc-date'); if(el) el.textContent=dtxt;
 }
 
