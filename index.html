@@ -747,7 +747,7 @@ textarea{resize:vertical;min-height:70px}
         <div class="quick-action" onclick="openLeaveModal()"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Apply Leave</div><div class="qa-sub">Request time off</div></div>
         <div class="quick-action" onclick="go('focus')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Focus Timer</div><div class="qa-sub">Pomodoro session</div></div>
         <div class="quick-action" onclick="go('history')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">My History</div><div class="qa-sub">View past logs</div></div>
-        <div class="quick-action" onclick="go('holidays')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Holidays</div><div class="qa-sub">2026 calendar</div></div>
+        <div class="quick-action" onclick="go('holidays')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">Holidays</div><div class="qa-sub" id="holiday-qa-sub">2026 calendar</div></div>
         <div class="quick-action" onclick="go('profile')"><div class="qa-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="qa-label">My Profile</div><div class="qa-sub">Stats & summary</div></div>
       </div>
 
@@ -1042,9 +1042,9 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
 <div class="view" id="view-holidays">
-      <div class="page-header"><div class="page-title">Holiday Calendar 2026</div><div class="page-sub">Indian public &amp; national holidays</div></div>
+      <div class="page-header"><div class="page-title" id="holiday-page-title">Holiday Calendar 2026</div><div class="page-sub">Indian public &amp; national holidays</div></div>
       <div class="card" style="margin-bottom:18px">
-        <div class="card-header"><div class="card-title">All Holidays &mdash; 2026</div></div>
+        <div class="card-header"><div class="card-title" id="holiday-card-title">All Holidays &mdash; 2026</div></div>
         <div id="upcoming-list" class="upcoming-list"></div>
       </div>
       <div class="holiday-grid" id="holiday-cal-grid"></div>
@@ -1620,25 +1620,84 @@ var GOOGLE_CLIENT_ID = '878315842700-o6c61ak0uv0r1fuo7unr2ndosvu2jq59.apps.googl
 // offline-capable: uses localApi when SCRIPT_URL is empty
 
 //  HOLIDAYS 
-var HOLIDAYS = {
-  '2026-01-01':{name:"New Year's Day",type:'national'},
-  '2026-01-14':{name:'Makar Sankranti / Pongal',type:'national'},
-  '2026-01-26':{name:'Republic Day',type:'national'},
-  '2026-02-26':{name:'Maha Shivratri',type:'religious'},
-  '2026-03-20':{name:'Holi',type:'religious'},
-  '2026-03-30':{name:'Ram Navami',type:'religious'},
-  '2026-04-03':{name:'Good Friday',type:'religious'},
-  '2026-04-14':{name:'Dr. Ambedkar Jayanti / Baisakhi',type:'national'},
-  '2026-05-01':{name:'Labour Day / Maharashtra Day',type:'national'},
-  '2026-05-05':{name:'Buddha Purnima',type:'religious'},
-  '2026-08-15':{name:'Independence Day',type:'national'},
-  '2026-09-07':{name:'Janmashtami',type:'religious'},
-  '2026-10-02':{name:'Gandhi Jayanti / Dussehra',type:'national'},
-  '2026-10-28':{name:'Diwali — Lakshmi Puja',type:'religious'},
-  '2026-10-29':{name:'Diwali — Govardhan Puja',type:'religious'},
-  '2026-11-14':{name:'Guru Nanak Jayanti',type:'religious'},
-  '2026-12-25':{name:'Christmas Day',type:'national'}
+// Fixed-date national holidays (same Gregorian date every year)
+var _HOL_FIXED = {
+  '01-01':{name:"New Year's Day",               type:'national'},
+  '01-14':{name:'Makar Sankranti / Pongal',     type:'national'},
+  '01-26':{name:'Republic Day',                 type:'national'},
+  '04-03':{name:'Good Friday',                  type:'national'},
+  '04-14':{name:'Dr. Ambedkar Jayanti',         type:'national'},
+  '05-01':{name:'Labour Day / Maharashtra Day',  type:'national'},
+  '08-15':{name:'Independence Day',             type:'national'},
+  '10-02':{name:'Gandhi Jayanti',               type:'national'},
+  '11-14':{name:'Guru Nanak Jayanti',           type:'national'},
+  '12-25':{name:'Christmas Day',                type:'national'}
 };
+
+// 2026 holiday calendar — national + major Hindu festivals given by Indian companies
+var _HOL_FALLBACK_2026 = {
+  '2026-01-01':{name:"New Year's Day",                     type:'national'},
+  '2026-01-14':{name:'Makar Sankranti / Pongal',           type:'national'},
+  '2026-01-26':{name:'Republic Day',                       type:'national'},
+  '2026-02-26':{name:'Maha Shivratri',                     type:'religious'},
+  '2026-03-20':{name:'Holi',                               type:'religious'},
+  '2026-03-22':{name:'Ugadi / Gudi Padwa',                 type:'religious'},
+  '2026-04-03':{name:'Good Friday',                        type:'national'},
+  '2026-04-14':{name:'Dr. Ambedkar Jayanti / Baisakhi',    type:'national'},
+  '2026-05-01':{name:'Labour Day / Maharashtra Day',        type:'national'},
+  '2026-08-15':{name:'Independence Day',                   type:'national'},
+  '2026-08-19':{name:'Ganesh Chaturthi',                   type:'religious'},
+  '2026-09-07':{name:'Janmashtami',                        type:'religious'},
+  '2026-10-02':{name:'Gandhi Jayanti',                     type:'national'},
+  '2026-10-09':{name:'Dussehra / Vijayadashami',           type:'religious'},
+  '2026-10-26':{name:'Dhanteras',                          type:'religious'},
+  '2026-10-28':{name:'Diwali — Lakshmi Puja',              type:'religious'},
+  '2026-10-29':{name:'Diwali — Govardhan Puja',            type:'religious'},
+  '2026-11-14':{name:'Guru Nanak Jayanti',                 type:'national'},
+  '2026-12-25':{name:'Christmas Day',                      type:'national'}
+};
+
+var _HOL_NATIONAL_KW = ['New Year','Republic','Independence','Gandhi','Labour','Maharashtra','Ambedkar','Christmas','Baisakhi'];
+
+var HOLIDAYS = {};
+(function(){
+  var yr = new Date().getFullYear();
+  if (yr === 2026) {
+    HOLIDAYS = Object.assign({}, _HOL_FALLBACK_2026);
+  } else {
+    // For future years: show fixed national holidays until API loads
+    Object.keys(_HOL_FIXED).forEach(function(mmdd){
+      HOLIDAYS[yr+'-'+mmdd] = _HOL_FIXED[mmdd];
+    });
+  }
+})();
+
+function loadHolidays() {
+  var year = new Date().getFullYear();
+  var yr = String(year);
+  ['holiday-page-title','holiday-card-title'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent=el.textContent.replace(/\d{4}/,yr);
+  });
+  var qs=document.getElementById('holiday-qa-sub'); if(qs) qs.textContent=yr+' calendar';
+
+  fetch('https://date.nager.at/api/v3/PublicHolidays/'+year+'/IN')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!Array.isArray(data)||data.length===0) return;
+      // MERGE: API fills in national dates; our curated religious holidays are kept
+      data.forEach(function(e){
+        var isNat=_HOL_NATIONAL_KW.some(function(k){ return e.name.indexOf(k)>=0; });
+        if(isNat || !HOLIDAYS[e.date]){
+          HOLIDAYS[e.date]={name:e.name, type:isNat?'national':'religious'};
+        }
+      });
+      setupNextHoliday();
+      var hv=document.getElementById('view-holidays');
+      if(hv&&hv.classList.contains('active')) renderHolidayTab();
+    })
+    .catch(function(){});
+}
+loadHolidays();
 
 //  DEMO DATA 
 var DEMO_USERS = [
