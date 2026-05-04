@@ -4047,8 +4047,12 @@ function openAssignProjectModal(projId) {
   if (sel) {
     sel.innerHTML = DEMO_USERS.map(function(u){ return '<option value="'+u.name+'">'+u.name+' ('+u.dept+')</option>'; }).join('');
   }
+  var modalTitle  = document.querySelector('#modal-assign-project .modal-title');
+  var submitBtn   = document.querySelector('#modal-assign-project .modal-foot .btn-primary');
   if (projId) {
-    // editing existing
+    _editingProjectId = projId;
+    if (modalTitle) modalTitle.textContent = 'Edit Project';
+    if (submitBtn)  submitBtn.textContent  = 'Save Changes';
     api('getProjects', {}).then(function(res){
       var p = (res.projects||[]).find(function(pr){ return pr.id===projId; });
       if (!p) return;
@@ -4063,6 +4067,9 @@ function openAssignProjectModal(projId) {
     });
     return;
   }
+  _editingProjectId = null;
+  if (modalTitle) modalTitle.textContent = 'Create & Assign Project';
+  if (submitBtn)  submitBtn.textContent  = 'Create Project';
   document.getElementById('ap-name').value = '';
   document.getElementById('ap-client').value = '';
   document.getElementById('ap-deadline').value = '';
@@ -4098,6 +4105,7 @@ function deleteTask(taskId) {
 }
 
 var _savingProject = false;
+var _editingProjectId = null;
 function submitAssignProject() {
   if (_savingProject) return;
   var name     = (document.getElementById('ap-name').value||'').trim();
@@ -4110,9 +4118,10 @@ function submitAssignProject() {
   var sel = document.getElementById('ap-assignees');
   var assignees = sel ? Array.from(sel.selectedOptions).map(function(o){ return o.value; }) : [];
   if (!assignees.length) { toast('Select at least one team member','error'); return; }
+  var isEdit = !!_editingProjectId;
   _savingProject = true;
   api('saveProject', {
-    id:         'p_'+Date.now(),
+    id:         isEdit ? _editingProjectId : 'p_'+Date.now(),
     name:       name,
     client:     client,
     dept:       dept,
@@ -4120,13 +4129,14 @@ function submitAssignProject() {
     stage:      stage,
     assignedTo: JSON.stringify(assignees),
     createdBy:  currentUser.name,
-    status:     'active'
+    status:     stage === 'Delivered' ? 'completed' : 'active'
   }).then(function(res){
     _savingProject = false;
     if (res && res.error) { toast('Error saving project','error'); return; }
     closeModal('modal-assign-project');
-    toast('Project created and assigned', 'success');
+    toast(isEdit ? 'Project updated' : 'Project created and assigned', 'success');
     loadAssignProjectsView();
+    if (typeof loadMyProjectsView === 'function') loadMyProjectsView();
   });
 }
 
