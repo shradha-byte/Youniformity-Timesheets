@@ -3603,7 +3603,8 @@ init();
 // ========== PROJECT PIPELINE OVERVIEW ==========
 function loadOverview() {
   api('getProjects', {}).then(function(res){
-    var projs = res.projects || [];
+    var deletedIds = JSON.parse(localStorage.getItem('yt_deleted_projects') || '[]');
+    var projs = (res.projects || []).filter(function(p){ return deletedIds.indexOf(p.id) === -1; });
 
     var deptEl = document.getElementById('overview-dept');
     var dept = deptEl ? deptEl.value : '';
@@ -3773,7 +3774,8 @@ function buildOrgNode(user, depth) {
 // ========== MY PROJECTS ==========
 function loadMyProjects() {
   api('getProjects', {name: currentUser.name}).then(function(res){
-    var projs = res.projects || [];
+    var deletedIds = JSON.parse(localStorage.getItem('yt_deleted_projects') || '[]');
+    var projs = (res.projects || []).filter(function(p){ return deletedIds.indexOf(p.id) === -1; });
     var grid = document.getElementById('my-projects-grid');
     if (!grid) return;
     if (!projs.length) {
@@ -3797,21 +3799,20 @@ function renderProjectCard(p, showActions) {
     return '<div class="proj-av" title="' + name + '">' + inits + '</div>';
   }).join('');
 
-  var actionsHtml = '';
-  if (showActions) {
-    actionsHtml = '<div style="margin-top:12px;display:flex;gap:6px">' +
-      '<button class="btn btn-outline btn-sm" onclick="editProject(\'' + p.id + '\')">Edit</button>' +
-      '<button class="btn btn-sm" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA" onclick="deleteProject(\'' + p.id + '\')">Delete</button>' +
-      '</div>';
-  }
+  var deleteBtn = showActions
+    ? '<button onclick="deleteProject(\'' + p.id + '\')" title="Delete" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.18);cursor:pointer;font-size:11px;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1" onmouseover="this.style.background=\'#FEE2E2\'" onmouseout="this.style.background=\'rgba(220,38,38,.08)\'">&#10005;</button>'
+    : '';
+  var editBtn = showActions
+    ? '<button onclick="editProject(\'' + p.id + '\')" title="Edit" style="position:absolute;bottom:12px;right:12px;width:26px;height:26px;border-radius:7px;background:var(--green-bg);border:1.5px solid var(--green-border);cursor:pointer;font-size:13px;color:var(--brand);display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1" onmouseover="this.style.borderColor=\'var(--brand)\'" onmouseout="this.style.borderColor=\'var(--green-border)\'">&#9998;</button>'
+    : '';
 
-  return '<div class="proj-card">' +
+  return '<div class="proj-card" style="position:relative">' +
     '<div class="proj-card-name">' + (p.name||'Untitled Project') + '</div>' +
     '<div class="proj-card-client">' + (p.client||'') + ' &mdash; ' + (p.dept||'') + '</div>' +
     '<div class="proj-meta-row">' +
       '<span class="proj-deadline ' + dlCls + '">' + dlTxt + '</span>' +
       '<div class="proj-assignees">' + assigneeHtml + '</div>' +
-    '</div>' + actionsHtml +
+    '</div>' + deleteBtn + editBtn +
   '</div>';
 }
 
@@ -4013,7 +4014,8 @@ function submitAssignTask() {
 // ========== ASSIGN PROJECTS ==========
 function loadAssignProjectsView() {
   api('getProjects', {}).then(function(res){
-    var projs = res.projects || [];
+    var deletedIds = JSON.parse(localStorage.getItem('yt_deleted_projects') || '[]');
+    var projs = (res.projects || []).filter(function(p){ return deletedIds.indexOf(p.id) === -1; });
     var grid = document.getElementById('assign-projects-grid');
     if (!grid) return;
     if (!projs.length) {
@@ -4059,19 +4061,22 @@ function editProject(projId) { openAssignProjectModal(projId); }
 
 function deleteProject(projId) {
   if (!confirm('Delete this project? This cannot be undone.')) return;
-  api('deleteProject', { id: projId }).then(function() {
-    toast('Project deleted', 'success');
-    loadAssignProjectsView();
-  });
+  var deletedIds = JSON.parse(localStorage.getItem('yt_deleted_projects') || '[]');
+  if (deletedIds.indexOf(projId) === -1) deletedIds.push(projId);
+  localStorage.setItem('yt_deleted_projects', JSON.stringify(deletedIds));
+  var projs = JSON.parse(localStorage.getItem('yt_projects') || '[]');
+  projs = projs.filter(function(pr){ return pr.id !== projId; });
+  localStorage.setItem('yt_projects', JSON.stringify(projs));
+  toast('Project deleted', 'success');
+  loadAssignProjectsView();
 }
 
 function deleteTask(taskId) {
   if (!confirm('Delete this task? This cannot be undone.')) return;
-  api('deleteTask', { id: taskId }).then(function() {
-    toast('Task deleted', 'success');
-    loadTasksView();
-    loadAssignTasksView();
-  });
+  localApi('deleteTask', { id: taskId });
+  toast('Task deleted', 'success');
+  loadTasksView();
+  loadAssignTasksView();
 }
 
 var _savingProject = false;
