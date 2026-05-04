@@ -1971,7 +1971,9 @@ function loadTasksView() {
   if (teamGrid) teamGrid.innerHTML = '<div class="empty" style="padding:28px 0"><div class="spinner"></div></div>';
   ensureAllUserTasks();
   api('getAllTasks', {}).then(function(res) {
-    var all = res.tasks || [];
+    var blocked = [];
+    try { blocked = JSON.parse(localStorage.getItem('yt_deleted_task_ids') || '[]'); } catch(e) {}
+    var all = (res.tasks || []).filter(function(t){ return blocked.indexOf(t.id) === -1; });
     renderMyTasks(all.filter(function(t){ return t.assignedTo === currentUser.name; }));
     var visibleNames = getVisibleTeamMembers().map(function(u){ return u.name; });
     renderTeamBoard(all.filter(function(t){ return visibleNames.indexOf(t.assignedTo) > -1; }));
@@ -2062,13 +2064,23 @@ function renderTeamBoard(tasks) {
       '</div>';
     if (active.length) {
       active.forEach(function(t) {
-        var s   = (t.status === 'active') ? 'todo' : t.status;
-        var dot = s === 'in-progress' ? '#F59E0B' : '#9CA3AF';
-        var lbl = s === 'in-progress' ? '<span style="font-size:9.5px;font-weight:700;color:#F59E0B;margin-left:4px">IN PROGRESS</span>' : '';
+        var s          = (t.status === 'active') ? 'todo' : t.status;
+        var dot        = s === 'in-progress' ? '#F59E0B' : '#9CA3AF';
+        var lbl        = s === 'in-progress' ? '<span style="font-size:9.5px;font-weight:700;color:#F59E0B">IN PROGRESS</span>' : '';
+        var prioColor  = t.priority === 'High' ? '#DC2626' : t.priority === 'Low' ? '#9CA3AF' : '#1A5C2E';
+        var prioBg     = t.priority === 'High' ? '#FEF2F2' : t.priority === 'Low' ? '#F3F4F6' : '#F0FDF4';
+        var dueBit     = t.dueDate ? '<span style="font-size:10px;color:var(--text-faint)">Due ' + fmtDate(t.dueDate) + '</span>' : '';
+        var byBit      = t.assignedBy ? '<span style="font-size:10px;color:var(--text-faint)">by ' + escHtml(t.assignedBy) + '</span>' : '';
         html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
           '<span style="width:7px;height:7px;border-radius:50%;background:' + dot + ';flex-shrink:0;margin-top:5px"></span>' +
           '<div style="flex:1;min-width:0">' +
-            '<span style="font-size:12.5px;color:var(--text-body);line-height:1.4">' + t.title + '</span>' + lbl +
+            '<div style="font-size:12.5px;color:var(--text-body);line-height:1.4">' + escHtml(t.title) + '</div>' +
+            '<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px">' +
+              lbl +
+              '<span style="font-size:9.5px;font-weight:700;color:' + prioColor + ';background:' + prioBg + ';padding:1px 6px;border-radius:99px">' + (t.priority||'Normal') + '</span>' +
+              byBit +
+              dueBit +
+            '</div>' +
           '</div>' +
         '</div>';
       });
@@ -2086,7 +2098,9 @@ function filterMyTasks(filter, tabEl) {
   document.querySelectorAll('.task-tab').forEach(function(t){ t.classList.remove('active'); });
   if (tabEl) tabEl.classList.add('active');
   api('getAllTasks', {}).then(function(res) {
-    var all = res.tasks || [];
+    var blocked = [];
+    try { blocked = JSON.parse(localStorage.getItem('yt_deleted_task_ids') || '[]'); } catch(e) {}
+    var all = (res.tasks || []).filter(function(t){ return blocked.indexOf(t.id) === -1; });
     renderMyTasks(all.filter(function(t){ return t.assignedTo === currentUser.name; }));
   });
 }
@@ -4154,18 +4168,18 @@ function deleteProject(projId) {
 
 function deleteTask(taskId) {
   if (!confirm('Delete this task? This cannot be undone.')) return;
-  api('deleteTask', { id: taskId }).then(function() {
-    try {
-      var allT = JSON.parse(localStorage.getItem('yt_tasks') || '[]');
-      allT = allT.filter(function(t){ return t.id !== taskId; });
-      localStorage.setItem('yt_tasks', JSON.stringify(allT));
-    } catch(e) {}
-    toast('Task deleted', 'success');
-    loadTasksView();
-    if (typeof loadAssignTasksView === 'function') loadAssignTasksView();
-  }).catch(function() {
-    toast('Delete failed', 'error');
-  });
+  try {
+    var blocked = JSON.parse(localStorage.getItem('yt_deleted_task_ids') || '[]');
+    if (blocked.indexOf(taskId) === -1) blocked.push(taskId);
+    localStorage.setItem('yt_deleted_task_ids', JSON.stringify(blocked));
+    var allT = JSON.parse(localStorage.getItem('yt_tasks') || '[]');
+    allT = allT.filter(function(t){ return t.id !== taskId; });
+    localStorage.setItem('yt_tasks', JSON.stringify(allT));
+  } catch(e) {}
+  toast('Task deleted', 'success');
+  loadTasksView();
+  if (typeof loadAssignTasksView === 'function') loadAssignTasksView();
+  api('deleteTask', { id: taskId }).catch(function(){});
 }
 
 var _savingProject = false;
