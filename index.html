@@ -1276,7 +1276,6 @@ textarea{resize:vertical;min-height:70px}
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="card-header"><div class="card-title">My Direct Reports</div></div>
         <div id="assign-tasks-list" style="padding:0"></div>
       </div>
     </div>
@@ -2117,6 +2116,8 @@ function submitAddTask() {
   var title    = (document.getElementById('atask-title').value || '').trim();
   var assignee = document.getElementById('atask-assignee').value || currentUser.name;
   if (!title) { toast('Enter a task title', 'error'); return; }
+  var _atDue2 = document.getElementById('atask-due').value;
+  if (_atDue2) { try { var _td2 = JSON.parse(localStorage.getItem('yt_task_dues')||'{}'); _td2[assignee+'|'+title] = _atDue2; localStorage.setItem('yt_task_dues', JSON.stringify(_td2)); } catch(e) {} }
   api('addTask', {
     title:      title,
     assignedTo: assignee,
@@ -3803,12 +3804,14 @@ function loadMyProjects() {
 }
 
 function renderProjectCard(p, showActions) {
-  var today = new Date();
-  var dl    = (p.deadline && p.deadline.trim()) ? new Date(p.deadline + 'T12:00:00') : null;
+  var today  = new Date();
+  var _rawDl = p.deadline;
+  if (!_rawDl) { try { var _dls = JSON.parse(localStorage.getItem('yt_deadlines') || '{}'); _rawDl = _dls[p.id] || ''; } catch(e) {} }
+  var dl    = (_rawDl && _rawDl.trim()) ? new Date(_rawDl + 'T12:00:00') : null;
   if (dl && isNaN(dl.getTime())) dl = null;
   var daysLeft = dl ? Math.round((dl - today) / 86400000) : null;
   var dlCls = daysLeft !== null ? (daysLeft < 7 ? 'urgent' : daysLeft < 21 ? 'soon' : '') : '';
-  var dlTxt = dl ? ('Due ' + p.deadline + (daysLeft !== null ? ' (' + (daysLeft < 0 ? 'overdue' : daysLeft + 'd left') + ')' : '')) : 'No deadline';
+  var dlTxt = dl ? ('Due ' + _rawDl + (daysLeft !== null ? ' (' + (daysLeft < 0 ? 'overdue' : daysLeft + 'd left') + ')' : '')) : 'No deadline';
 
   var stageCols = {
     Scoping:   {bg:'#EEF2FF', txt:'#4F46E5'},
@@ -3973,11 +3976,15 @@ function loadAssignTasksView() {
     myReports.forEach(function(u){
       var inits = u.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
       var uTasks = allTasks.filter(function(t){ return t.assignedTo === u.name && t.status !== 'done'; });
+      var _taskDues = {}; try { _taskDues = JSON.parse(localStorage.getItem('yt_task_dues') || '{}'); } catch(e) {}
       var taskRows = uTasks.map(function(t){
         var prioColor = t.priority === 'High' ? '#DC2626' : t.priority === 'Low' ? '#9CA3AF' : '#1A5C2E';
         var prioBg    = t.priority === 'High' ? '#FEF2F2' : t.priority === 'Low' ? '#F3F4F6' : '#F0FDF4';
+        var taskDue   = t.dueDate || _taskDues[(t.assignedTo||'') + '|' + (t.title||'')] || '';
+        var dueBit    = taskDue ? '<span style="font-size:10px;color:var(--text-faint);white-space:nowrap">Due&nbsp;' + taskDue + '</span>' : '';
         return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">' +
-          '<span style="flex:1;font-size:12.5px;color:var(--text-body)">' + t.title + '</span>' +
+          '<span style="flex:1;font-size:12.5px;color:var(--text-body)">' + escHtml(t.title) + '</span>' +
+          dueBit +
           '<span style="font-size:10px;font-weight:700;color:' + prioColor + ';background:' + prioBg + ';padding:1px 7px;border-radius:99px">' + (t.priority||'Normal') + '</span>' +
           '<button onclick="deleteTask(\'' + t.id + '\')" title="Delete task" style="background:none;border:none;cursor:pointer;color:#D1D5DB;font-size:14px;padding:0 2px;line-height:1" onmouseover="this.style.color=\'#DC2626\'" onmouseout="this.style.color=\'#D1D5DB\'">&#10005;</button>' +
         '</div>';
@@ -4051,6 +4058,8 @@ function submitAssignTask() {
   var assignee = document.getElementById('at-assignee').value;
   if (!title)    { toast('Enter a task title','error'); return; }
   if (!assignee) { toast('Select an assignee','error'); return; }
+  var _atDue = document.getElementById('at-due').value;
+  if (_atDue) { try { var _td = JSON.parse(localStorage.getItem('yt_task_dues')||'{}'); _td[assignee+'|'+title] = _atDue; localStorage.setItem('yt_task_dues', JSON.stringify(_td)); } catch(e) {} }
   api('addTask', {
     title:      title,
     assignedTo: assignee,
@@ -4157,10 +4166,12 @@ function submitAssignProject() {
   var sel = document.getElementById('ap-assignees');
   var assignees = sel ? Array.from(sel.selectedOptions).map(function(o){ return o.value; }) : [];
   if (!assignees.length) { toast('Select at least one team member','error'); return; }
-  var isEdit = !!_editingProjectId;
+  var isEdit  = !!_editingProjectId;
+  var _projId = isEdit ? _editingProjectId : 'p_' + Date.now();
+  if (deadline) { try { var _dls2 = JSON.parse(localStorage.getItem('yt_deadlines') || '{}'); _dls2[_projId] = deadline; localStorage.setItem('yt_deadlines', JSON.stringify(_dls2)); } catch(e) {} }
   _savingProject = true;
   api('saveProject', {
-    id:         isEdit ? _editingProjectId : 'p_'+Date.now(),
+    id:         _projId,
     name:       name,
     client:     client,
     dept:       dept,
