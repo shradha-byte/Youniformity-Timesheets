@@ -2014,7 +2014,7 @@ function renderMyTasks(tasks) {
     var chkClr  = (s === 'done' || s === 'in-progress') ? '#fff' : 'transparent';
     var chkIcon = s === 'done' ? '&#10003;' : s === 'in-progress' ? '&#9654;' : '';
     var titleCss = s === 'done' ? 'text-decoration:line-through;color:var(--text-faint)' : 'color:var(--text-dark)';
-    var dueBit = t.dueDate ? ' &middot; <span style="color:var(--text-faint)">Due ' + t.dueDate + '</span>' : '';
+    var dueBit = t.dueDate ? ' &middot; <span style="color:var(--text-faint)">Due ' + fmtDate(t.dueDate) + '</span>' : '';
     html += '<div class="task-item">' +
       '<button class="task-check" style="background:' + chkBg + ';border-color:' + chkBd + ';color:' + chkClr + '" ' +
         'onclick="cycleTaskStatus(\'' + t.id + '\',\'' + nextS + '\')" title="Mark as ' + nextS + '">' + chkIcon + '</button>' +
@@ -3603,6 +3603,12 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function fmtDate(raw) {
+  if (!raw) return '';
+  var s = String(raw);
+  return s.indexOf('T') > -1 ? s.slice(0, 10) : s;
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.overlay').forEach(function(o){
     o.addEventListener('click',function(e){ if(e.target===o) o.classList.remove('open'); });
@@ -3981,9 +3987,11 @@ function loadAssignTasksView() {
         var prioColor = t.priority === 'High' ? '#DC2626' : t.priority === 'Low' ? '#9CA3AF' : '#1A5C2E';
         var prioBg    = t.priority === 'High' ? '#FEF2F2' : t.priority === 'Low' ? '#F3F4F6' : '#F0FDF4';
         var taskDue   = t.dueDate || _taskDues[(t.assignedTo||'') + '|' + (t.title||'')] || '';
-        var dueBit    = taskDue ? '<span style="font-size:10px;color:var(--text-faint);white-space:nowrap">Due&nbsp;' + taskDue + '</span>' : '';
+        var dueBit    = taskDue ? '<span style="font-size:10px;color:var(--text-faint);white-space:nowrap">Due&nbsp;' + fmtDate(taskDue) + '</span>' : '';
+        var byBit     = t.assignedBy ? '<span style="font-size:10px;color:var(--text-faint);white-space:nowrap">by&nbsp;' + escHtml(t.assignedBy) + '</span>' : '';
         return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">' +
           '<span style="flex:1;font-size:12.5px;color:var(--text-body)">' + escHtml(t.title) + '</span>' +
+          byBit +
           dueBit +
           '<span style="font-size:10px;font-weight:700;color:' + prioColor + ';background:' + prioBg + ';padding:1px 7px;border-radius:99px">' + (t.priority||'Normal') + '</span>' +
           '<button onclick="deleteTask(\'' + t.id + '\')" title="Delete task" style="background:none;border:none;cursor:pointer;color:#D1D5DB;font-size:14px;padding:0 2px;line-height:1" onmouseover="this.style.color=\'#DC2626\'" onmouseout="this.style.color=\'#D1D5DB\'">&#10005;</button>' +
@@ -4146,10 +4154,18 @@ function deleteProject(projId) {
 
 function deleteTask(taskId) {
   if (!confirm('Delete this task? This cannot be undone.')) return;
-  localApi('deleteTask', { id: taskId });
-  toast('Task deleted', 'success');
-  loadTasksView();
-  loadAssignTasksView();
+  api('deleteTask', { id: taskId }).then(function() {
+    try {
+      var allT = JSON.parse(localStorage.getItem('yt_tasks') || '[]');
+      allT = allT.filter(function(t){ return t.id !== taskId; });
+      localStorage.setItem('yt_tasks', JSON.stringify(allT));
+    } catch(e) {}
+    toast('Task deleted', 'success');
+    loadTasksView();
+    if (typeof loadAssignTasksView === 'function') loadAssignTasksView();
+  }).catch(function() {
+    toast('Delete failed', 'error');
+  });
 }
 
 var _savingProject = false;
