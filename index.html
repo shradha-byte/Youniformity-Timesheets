@@ -1556,7 +1556,7 @@ textarea{resize:vertical;min-height:70px}
 <div class="overlay" id="modal-assign-project">
   <div class="modal" style="max-width:480px">
     <div class="modal-head">
-      <div class="modal-title">Create &amp; Assign Project</div>
+      <div class="modal-title" id="ap-modal-title">Create &amp; Assign Project</div>
       <button class="modal-close" onclick="closeModal('modal-assign-project')">&#215;</button>
     </div>
     <div class="modal-body">
@@ -1601,7 +1601,7 @@ textarea{resize:vertical;min-height:70px}
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modal-assign-project')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAssignProject()">Create Project</button>
+      <button class="btn btn-primary" id="ap-modal-submit" onclick="submitAssignProject()">Create Project</button>
     </div>
   </div>
 </div>
@@ -4047,8 +4047,8 @@ function openAssignProjectModal(projId) {
   if (sel) {
     sel.innerHTML = DEMO_USERS.map(function(u){ return '<option value="'+u.name+'">'+u.name+' ('+u.dept+')</option>'; }).join('');
   }
-  var modalTitle  = document.querySelector('#modal-assign-project .modal-title');
-  var submitBtn   = document.querySelector('#modal-assign-project .modal-foot .btn-primary');
+  var modalTitle  = document.getElementById('ap-modal-title');
+  var submitBtn   = document.getElementById('ap-modal-submit');
   if (projId) {
     _editingProjectId = projId;
     if (modalTitle) modalTitle.textContent = 'Edit Project';
