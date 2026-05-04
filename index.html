@@ -1200,8 +1200,10 @@ textarea{resize:vertical;min-height:70px}
     <!-- MY PROJECTS VIEW (all users — filtered to own) -->
     <div class="view" id="view-projects">
       <div class="page-header">
-        <div class="page-title">My Projects</div>
-        <div class="page-sub">Projects assigned to you &mdash; log hours on the Timesheet</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div><div class="page-title">My Projects</div><div class="page-sub">Projects assigned to you &mdash; log hours on the Timesheet</div></div>
+          <button id="btn-new-project-self" style="display:none" class="btn btn-gold" onclick="openAssignProjectModal()">+ New Project</button>
+        </div>
       </div>
       <div id="my-projects-grid" class="proj-grid"></div>
     </div>
@@ -1401,6 +1403,10 @@ textarea{resize:vertical;min-height:70px}
       <div class="form-group">
         <label>Task Title</label>
         <input type="text" id="atask-title" placeholder="What needs to get done?">
+      </div>
+      <div class="form-group">
+        <label>Assign To</label>
+        <select id="atask-assignee"></select>
       </div>
       <div class="row2">
         <div class="form-group">
@@ -2098,22 +2104,30 @@ function openAddTaskModal() {
   document.getElementById('atask-title').value = '';
   document.getElementById('atask-priority').value = 'Normal';
   document.getElementById('atask-due').value = '';
+  var sel = document.getElementById('atask-assignee');
+  if (sel) {
+    sel.innerHTML = DEMO_USERS.map(function(u){
+      return '<option value="'+u.name+'"'+(u.name===currentUser.name?' selected':'')+'>'+u.name+'</option>';
+    }).join('');
+  }
   openModal('modal-add-task');
 }
 
 function submitAddTask() {
-  var title = (document.getElementById('atask-title').value || '').trim();
+  var title    = (document.getElementById('atask-title').value || '').trim();
+  var assignee = document.getElementById('atask-assignee').value || currentUser.name;
   if (!title) { toast('Enter a task title', 'error'); return; }
   api('addTask', {
     title:      title,
-    assignedTo: currentUser.name,
+    assignedTo: assignee,
     assignedBy: currentUser.name,
     priority:   document.getElementById('atask-priority').value,
     dueDate:    document.getElementById('atask-due').value
   }).then(function() {
     closeModal('modal-add-task');
-    toast('Task added', 'success');
+    toast('Task added' + (assignee !== currentUser.name ? ' and assigned to ' + assignee : ''), 'success');
     loadTasksView();
+    if (typeof loadAssignTasksView === 'function') loadAssignTasksView();
   });
 }
 
@@ -3691,6 +3705,8 @@ function updateRoleNav() {
   var adminSec = document.getElementById('admin-section');
   if (mgrSec)   mgrSec.style.display   = isManager ? '' : 'none';
   if (adminSec) adminSec.style.display  = isAdmin   ? '' : 'none';
+  var newProjBtn = document.getElementById('btn-new-project-self');
+  if (newProjBtn) newProjBtn.style.display = (role !== 'intern') ? '' : 'none';
   // update sidebar role badge
   var suRole = document.getElementById('su-role');
   if (!suRole) {
@@ -3982,8 +3998,7 @@ function openAssignTaskModal(preAssignee) {
   // populate assignee dropdown
   var sel = document.getElementById('at-assignee');
   if (sel) {
-    var reports = getMyReports();
-    sel.innerHTML = reports.map(function(u){ return '<option value="'+u.name+'"'+(u.name===preAssignee?' selected':'')+'>'+u.name+'</option>'; }).join('');
+    sel.innerHTML = DEMO_USERS.map(function(u){ return '<option value="'+u.name+'"'+(u.name===preAssignee?' selected':'')+'>'+u.name+'</option>'; }).join('');
   }
   document.getElementById('at-title').value = '';
   document.getElementById('at-priority').value = 'Normal';
@@ -4027,11 +4042,10 @@ function loadAssignProjectsView() {
 }
 
 function openAssignProjectModal(projId) {
-  // populate assignees list
+  // populate assignees list — all users, self pre-selected for new projects
   var sel = document.getElementById('ap-assignees');
   if (sel) {
-    var assignable = getVisibleTeamMembers();
-    sel.innerHTML = assignable.map(function(u){ return '<option value="'+u.name+'">'+u.name+' ('+u.dept+')</option>'; }).join('');
+    sel.innerHTML = DEMO_USERS.map(function(u){ return '<option value="'+u.name+'">'+u.name+' ('+u.dept+')</option>'; }).join('');
   }
   if (projId) {
     // editing existing
@@ -4054,6 +4068,10 @@ function openAssignProjectModal(projId) {
   document.getElementById('ap-deadline').value = '';
   var stageEl2 = document.getElementById('ap-stage');
   if (stageEl2) stageEl2.value = 'Active';
+  // pre-select current user for new project
+  if (sel && currentUser) {
+    Array.from(sel.options).forEach(function(o){ o.selected = (o.value === currentUser.name); });
+  }
   openModal('modal-assign-project');
 }
 
