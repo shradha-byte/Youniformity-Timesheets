@@ -1213,10 +1213,11 @@ textarea{resize:vertical;min-height:70px}
           <div><div class="page-title">Project Pipeline</div><div class="page-sub">Visual overview of all projects across delivery stages</div></div>
           <select id="overview-dept" onchange="loadOverview()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit">
             <option value="">All Departments</option>
-            <option value="Revenue &amp; Operations">Revenue &amp; Operations</option>
+            <option value="Business Development">Business Development</option>
             <option value="Consulting &amp; Delivery">Consulting &amp; Delivery</option>
-            <option value="Growth &amp; Engagement">Growth &amp; Engagement</option>
-            <option value="Design &amp; Brand">Design &amp; Brand</option>
+            <option value="Client Success">Client Success</option>
+            <option value="Marketing &amp; Brand">Marketing &amp; Brand</option>
+            <option value="Technology &amp; AI">Technology &amp; AI</option>
           </select>
         </div>
       </div>
@@ -1235,7 +1236,6 @@ textarea{resize:vertical;min-height:70px}
             <div class="pf-arrow">&#8594;</div>
             <div class="pf-stage" style="background:#EFF6FF;color:#2563EB">Delivered</div>
           </div>
-          <div style="font-size:11px;color:var(--text-faint);margin-top:8px">Achraj (BD) &#8594; Aarsh (Onboarding) &#8594; Shradha (Delivery) &#8594; Runjhun (Design) &#8594; Founders Sign Off &#8594; Achraj (Invoicing)</div>
         </div>
       </div>
       <!-- Stats -->
@@ -1582,6 +1582,16 @@ textarea{resize:vertical;min-height:70px}
         <label>Assign To (hold Ctrl/Cmd for multiple)</label>
         <select id="ap-assignees" multiple style="min-height:100px"></select>
       </div>
+      <div class="form-group">
+        <label>Pipeline Stage</label>
+        <select id="ap-stage">
+          <option value="Scoping">Scoping</option>
+          <option value="Active" selected>Active</option>
+          <option value="Review">Review</option>
+          <option value="Design">Design</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('modal-assign-project')">Cancel</button>
@@ -1758,27 +1768,27 @@ if (!localStorage.getItem('yt_cleaned_v1')) {
 
 //  DEMO DATA
 var DEMO_USERS = [
-  {name:'Mamta Kumar',     email:'md@youniformity.co.in',    dept:'Leadership',             type:'Full-time', role:'admin',    reportsTo:null,            gender:'female'},
-  {name:'Manoj Kumar',     email:'manoj@youniformity.co.in',    dept:'Leadership',             type:'Full-time', role:'admin',    reportsTo:'Mamta Kumar'},
-  {name:'Achraj Prakash',  email:'operations@youniformity.co.in', dept:'Business Development',  type:'Full-time', role:'manager',  reportsTo:'Manoj Kumar',   gender:'male'},
-  {name:'Shradha Prakash', email:'shradha@youniformity.co.in',  dept:'Consulting & Delivery', type:'Full-time', role:'manager',  reportsTo:'Manoj Kumar',   gender:'female'},
-  {name:'Aarsh Bhatia',    email:'aarsh@youniformity.co.in',    dept:'Client Success',         type:'Full-time', role:'manager',  reportsTo:'Manoj Kumar',   gender:'male'},
-  {name:'Runjhun Bhatia',  email:'runjhun@youniformity.co.in',  dept:'Marketing & Brand',     type:'Full-time', role:'manager',  reportsTo:'Manoj Kumar',   gender:'female'},
-  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',    dept:'Business Development',  type:'Full-time', role:'employee', reportsTo:'Achraj Prakash', gender:'male'},
-  {name:'Nusrath',         email:'nusrath@youniformity.co.in',  dept:'Consulting & Delivery', type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
-  {name:'Nandini',         email:'nandini@youniformity.co.in',  dept:'Technology & AI',       type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
-  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',  dept:'Marketing & Brand',     type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia'}
+  {name:'Mamta Kumar',     email:'md@youniformity.co.in',          dept:'Leadership',          type:'Full-time', role:'admin',    reportsTo:null,             gender:'female'},
+  {name:'Manoj Kumar',     email:'manoj@youniformity.co.in',       dept:'Leadership',          type:'Full-time', role:'admin',    reportsTo:'Mamta Kumar',    gender:'male'},
+  {name:'Achraj Prakash',  email:'operations@youniformity.co.in',  dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
+  {name:'Aarsh Bhatia',    email:'aarsh@youniformity.co.in',       dept:'Client Success',      type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
+  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
+  {name:'Shradha Prakash', email:'shradha@youniformity.co.in',     dept:'Consulting & Delivery',type:'Full-time',role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
+  {name:'Runjhun Bhatia',  email:'runjhun@youniformity.co.in',     dept:'Marketing & Brand',   type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
+  {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash',gender:'female'},
+  {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Shradha Prakash',gender:'female'},
+  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia', gender:'male'}
 ];
 
 var DEMO_PROJECTS = [];
 
 var DEPT_TASKS = {
-  'Business Development':  ['Client Outreach & Lead Generation','Proposal & Pitch Deck Preparation','CRM Data Management','Market Research','Invoice & Billing Follow-up'],
-  'Consulting & Delivery': ['EcoVadis Gap Analysis','GHG / Carbon Footprint Assessment','BRSR Report Drafting','Client Documentation Review','Stakeholder Communication'],
-  'Client Success':        ['Client Onboarding','Project Status Updates','Retainer Client Check-ins','Escalation Handling','Client Feedback Collection'],
-  'Marketing & Brand':     ['Social Media Content Creation','Brand Material Design','Campaign Performance Tracking','Internal Branding Assets','Website Content Updates'],
-  'Technology & AI':       ['ESG Dashboard Development','Data Analysis & Reporting','Tool & Platform Research','Process Automation','Technical Documentation'],
-  'Leadership':            ['Strategic Planning','Board Reporting','Partner Meetings','Team Reviews','Investor & Fundraising Relations']
+  'Business Development':   ['Client Outreach & Lead Generation','Proposal & Pitch Deck Preparation','CRM Data Management','Market Research','Invoice & Billing Follow-up'],
+  'Consulting & Delivery':  ['EcoVadis Gap Analysis','GHG / Carbon Footprint Assessment','BRSR Report Drafting','Client Documentation Review','Stakeholder Communication'],
+  'Client Success':         ['Client Onboarding','Project Status Updates','Retainer Client Check-ins','Escalation Handling','Client Feedback Collection'],
+  'Marketing & Brand':      ['Social Media Content Creation','Brand Material Design','Campaign Performance Tracking','Internal Branding Assets','Website Content Updates'],
+  'Technology & AI':        ['ESG Dashboard Development','Data Analysis & Reporting','Tool & Platform Research','Process Automation','Technical Documentation'],
+  'Leadership':             ['Strategic Planning','Board Reporting','Partner Meetings','Team Reviews','Investor & Fundraising Relations']
 };
 
 //  STATE
@@ -3632,7 +3642,8 @@ function renderOverviewKanban(projs) {
     var col = sc[stage] || {bg:'#F3F4F6', txt:'#6B7280'};
     var sp = projs.filter(function(p){ return (p.stage || 'Active') === stage; });
     var cards = sp.map(function(p){
-      var dl = p.deadline ? new Date(p.deadline + 'T12:00:00') : null;
+      var dl = (p.deadline && p.deadline.trim()) ? new Date(p.deadline + 'T12:00:00') : null;
+      if (dl && isNaN(dl.getTime())) dl = null;
       var dLeft = dl ? Math.ceil((dl - today) / 86400000) : null;
       var dc = dLeft === null ? '' : (dLeft < 0 ? '#EF4444' : dLeft <= 7 ? '#F59E0B' : '#9CA3AF');
       var dt = dLeft === null ? '' : (dLeft < 0 ? Math.abs(dLeft)+'d overdue' : dLeft+'d left');
@@ -3760,7 +3771,8 @@ function loadMyProjects() {
 
 function renderProjectCard(p, showActions) {
   var today = new Date();
-  var dl    = p.deadline ? new Date(p.deadline) : null;
+  var dl    = (p.deadline && p.deadline.trim()) ? new Date(p.deadline + 'T12:00:00') : null;
+  if (dl && isNaN(dl.getTime())) dl = null;
   var daysLeft = dl ? Math.round((dl - today) / 86400000) : null;
   var dlCls = daysLeft !== null ? (daysLeft < 7 ? 'urgent' : daysLeft < 21 ? 'soon' : '') : '';
   var dlTxt = dl ? ('Due ' + p.deadline + (daysLeft !== null ? ' (' + (daysLeft < 0 ? 'overdue' : daysLeft + 'd left') + ')' : '')) : '';
@@ -3928,18 +3940,13 @@ function getUserDepth(name) {
 // admins see everyone; others see all users at the same depth level or deeper (equal + lower hierarchy).
 function getVisibleTeamMembers() {
   if (!currentUser) return [];
-  if (currentUser.role === 'admin') return DEMO_USERS.filter(function(u){ return u.name !== currentUser.name; });
-  var myDepth = getUserDepth(currentUser.name);
-  return DEMO_USERS.filter(function(u){
-    if (u.name === currentUser.name) return false;
-    return getUserDepth(u.name) >= myDepth;
-  });
+  return DEMO_USERS.filter(function(u){ return u.name !== currentUser.name; });
 }
 
 function getMyReports() {
   if (!currentUser) return [];
-  if (currentUser.role === 'admin') return DEMO_USERS.filter(function(u){ return u.name !== currentUser.name; });
-  return DEMO_USERS.filter(function(u){ return u.reportsTo === currentUser.name; });
+  if (currentUser.role === 'intern') return [];
+  return DEMO_USERS.filter(function(u){ return u.name !== currentUser.name; });
 }
 
 function openAssignTaskModal(preAssignee) {
@@ -4005,6 +4012,8 @@ function openAssignProjectModal(projId) {
       document.getElementById('ap-client').value   = p.client||'';
       document.getElementById('ap-deadline').value = p.deadline||'';
       document.getElementById('ap-dept').value     = p.dept||'Business Development';
+      var stageEl = document.getElementById('ap-stage');
+      if (stageEl) stageEl.value = p.stage||'Active';
       if (sel) { Array.from(sel.options).forEach(function(o){ o.selected = (p.assignedTo||[]).indexOf(o.value) > -1; }); }
       openModal('modal-assign-project');
     });
@@ -4013,30 +4022,40 @@ function openAssignProjectModal(projId) {
   document.getElementById('ap-name').value = '';
   document.getElementById('ap-client').value = '';
   document.getElementById('ap-deadline').value = '';
+  var stageEl2 = document.getElementById('ap-stage');
+  if (stageEl2) stageEl2.value = 'Active';
   openModal('modal-assign-project');
 }
 
 function editProject(projId) { openAssignProjectModal(projId); }
 
+var _savingProject = false;
 function submitAssignProject() {
+  if (_savingProject) return;
   var name     = (document.getElementById('ap-name').value||'').trim();
   var client   = (document.getElementById('ap-client').value||'').trim();
   var deadline = document.getElementById('ap-deadline').value;
   var dept     = document.getElementById('ap-dept').value;
+  var stageEl  = document.getElementById('ap-stage');
+  var stage    = stageEl ? stageEl.value : 'Active';
   if (!name)   { toast('Enter a project name','error'); return; }
   var sel = document.getElementById('ap-assignees');
   var assignees = sel ? Array.from(sel.selectedOptions).map(function(o){ return o.value; }) : [];
   if (!assignees.length) { toast('Select at least one team member','error'); return; }
+  _savingProject = true;
   api('saveProject', {
     id:         'p_'+Date.now(),
     name:       name,
     client:     client,
     dept:       dept,
     deadline:   deadline,
+    stage:      stage,
     assignedTo: JSON.stringify(assignees),
     createdBy:  currentUser.name,
     status:     'active'
-  }).then(function(){
+  }).then(function(res){
+    _savingProject = false;
+    if (res && res.error) { toast('Error saving project','error'); return; }
     closeModal('modal-assign-project');
     toast('Project created and assigned', 'success');
     loadAssignProjectsView();
