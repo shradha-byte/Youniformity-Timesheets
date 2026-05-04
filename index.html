@@ -3808,12 +3808,43 @@ function renderProjectCard(p, showActions) {
   if (dl && isNaN(dl.getTime())) dl = null;
   var daysLeft = dl ? Math.round((dl - today) / 86400000) : null;
   var dlCls = daysLeft !== null ? (daysLeft < 7 ? 'urgent' : daysLeft < 21 ? 'soon' : '') : '';
-  var dlTxt = dl ? ('Due ' + p.deadline + (daysLeft !== null ? ' (' + (daysLeft < 0 ? 'overdue' : daysLeft + 'd left') + ')' : '')) : '';
+  var dlTxt = dl ? ('Due ' + p.deadline + (daysLeft !== null ? ' (' + (daysLeft < 0 ? 'overdue' : daysLeft + 'd left') + ')' : '')) : 'No deadline';
 
-  var assigneeHtml = (p.assignedTo||[]).map(function(name){
-    var inits = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
-    return '<div class="proj-av" title="' + name + '">' + inits + '</div>';
-  }).join('');
+  var stageCols = {
+    Scoping:   {bg:'#EEF2FF', txt:'#4F46E5'},
+    Active:    {bg:'#ECFDF5', txt:'#059669'},
+    Review:    {bg:'#FFFBEB', txt:'#D97706'},
+    Design:    {bg:'#FDF2F8', txt:'#DB2777'},
+    Delivered: {bg:'#EFF6FF', txt:'#2563EB'}
+  };
+  var stage = p.stage || 'Scoping';
+  var sc = stageCols[stage] || {bg:'#F3F4F6', txt:'#6B7280'};
+  var stageBadge = '<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:' + sc.bg + ';color:' + sc.txt + ';letter-spacing:.3px">' + stage + '</span>';
+
+  var isDelivered = stage === 'Delivered';
+  var statusColor = isDelivered ? '#059669' : (p.status === 'active' ? '#D97706' : '#6B7280');
+  var statusLabel = isDelivered ? 'Delivered' : (p.status === 'active' ? 'Active' : (p.status || 'Active'));
+  var statusDot = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:' + statusColor + ';font-weight:500">'
+    + '<span style="width:7px;height:7px;border-radius:50%;background:' + statusColor + ';display:inline-block"></span>'
+    + statusLabel + '</span>';
+
+  var assignees = p.assignedTo || [];
+  var assigneeHtml = assignees.length
+    ? assignees.map(function(name){
+        var inits = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+        return '<div class="proj-av" title="' + escHtml(name) + '">' + inits + '</div>';
+      }).join('')
+    : '';
+  var assigneeNames = assignees.length
+    ? '<div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;line-height:1.5">'
+        + '<span style="font-weight:600;color:var(--text-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px">Assigned to &nbsp;</span>'
+        + assignees.map(function(n){ return escHtml(n); }).join(', ')
+      + '</div>'
+    : '<div style="font-size:11px;color:var(--text-faint);margin-top:2px">Unassigned</div>';
+
+  var createdByHtml = p.createdBy
+    ? '<div style="font-size:10.5px;color:var(--text-faint);margin-top:4px">Created by ' + escHtml(p.createdBy) + '</div>'
+    : '';
 
   var deleteBtn = showActions
     ? '<button onclick="deleteProject(\'' + p.id + '\')" title="Delete" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.18);cursor:pointer;font-size:11px;color:#DC2626;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1" onmouseover="this.style.background=\'#FEE2E2\'" onmouseout="this.style.background=\'rgba(220,38,38,.08)\'">&#10005;</button>'
@@ -3822,14 +3853,22 @@ function renderProjectCard(p, showActions) {
     ? '<button onclick="editProject(\'' + p.id + '\')" title="Edit" style="position:absolute;bottom:12px;right:12px;width:26px;height:26px;border-radius:7px;background:var(--green-bg);border:1.5px solid var(--green-border);cursor:pointer;font-size:13px;color:var(--brand);display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1" onmouseover="this.style.borderColor=\'var(--brand)\'" onmouseout="this.style.borderColor=\'var(--green-border)\'">&#9998;</button>'
     : '';
 
-  return '<div class="proj-card" style="position:relative">' +
-    '<div class="proj-card-name">' + (p.name||'Untitled Project') + '</div>' +
-    '<div class="proj-card-client">' + (p.client||'') + ' &mdash; ' + (p.dept||'') + '</div>' +
-    '<div class="proj-meta-row">' +
-      '<span class="proj-deadline ' + dlCls + '">' + dlTxt + '</span>' +
-      '<div class="proj-assignees">' + assigneeHtml + '</div>' +
-    '</div>' + deleteBtn + editBtn +
-  '</div>';
+  return '<div class="proj-card" style="position:relative">'
+    + '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px">'
+        + stageBadge + statusDot
+    + '</div>'
+    + '<div class="proj-card-name">' + escHtml(p.name||'Untitled Project') + '</div>'
+    + '<div class="proj-card-client" style="margin-bottom:4px">'
+        + escHtml(p.client||'') + ' &mdash; ' + escHtml(p.dept||'')
+    + '</div>'
+    + assigneeNames
+    + '<div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">'
+        + '<div class="proj-assignees">' + assigneeHtml + '</div>'
+        + '<span class="proj-deadline ' + dlCls + '" style="margin-left:auto">' + dlTxt + '</span>'
+    + '</div>'
+    + createdByHtml
+    + deleteBtn + editBtn
+  + '</div>';
 }
 
 // ========== APPROVALS ==========
