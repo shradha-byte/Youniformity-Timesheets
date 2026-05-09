@@ -3604,7 +3604,179 @@ function buildMonthlySummary(results,months) {
   }).join('');
 }
 
-//  FOCUS TIMER 
+// ── TIMESHEET GRID ────────────────────────────────────────────
+
+function tsLoadState() {
+  var ws = new Date(currentWeekStart).toISOString().slice(0,10);
+  var raw = localStorage.getItem('yt_ts_'+currentUser.name+'_'+ws);
+  if (!raw) return {rows:{}, statuses:{}};
+  try { return JSON.parse(raw); } catch(e) { return {rows:{}, statuses:{}}; }
+}
+
+function tsSaveState() {
+  var ws = new Date(currentWeekStart).toISOString().slice(0,10);
+  var rows = {};
+  document.querySelectorAll('.ts-proj-row').forEach(function(tr) {
+    var pn = tr.dataset.proj;
+    if (!pn) return;
+    rows[pn] = {};
+    tr.querySelectorAll('.ts-hours-inp').forEach(function(inp) {
+      var v = parseFloat(inp.value) || 0;
+      if (v > 0) rows[pn][inp.dataset.date] = v;
+    });
+  });
+  var statuses = {};
+  document.querySelectorAll('.ts-status-sel').forEach(function(sel) {
+    statuses[sel.dataset.date] = sel.value;
+  });
+  localStorage.setItem('yt_ts_'+currentUser.name+'_'+ws, JSON.stringify({rows:rows, statuses:statuses}));
+}
+
+function renderTimesheetGrid() {
+  var ws     = new Date(currentWeekStart);
+  var wsStr  = ws.toISOString().slice(0,10);
+  var today  = new Date().toISOString().slice(0,10);
+  var thisWS = getWeekStart(new Date());
+
+  // Week label
+  var we  = new Date(ws); we.setDate(we.getDate()+4); // Friday
+  var fmt = function(d){ return d.getDate()+' '+d.toLocaleString('default',{month:'short'}); };
+  var lbl = document.getElementById('week-label');
+  if (lbl) lbl.textContent = 'Week of '+fmt(ws)+' – '+fmt(we)+', '+we.getFullYear();
+
+  var nextBtn = document.getElementById('btn-next-week');
+  if (nextBtn) { nextBtn.disabled = wsStr >= thisWS; nextBtn.style.opacity = wsStr >= thisWS ? '.35' : '1'; }
+
+  // Mon–Fri dates
+  var days = [];
+  for (var i = 0; i < 5; i++) {
+    var d = new Date(ws); d.setDate(d.getDate()+i);
+    days.push(d);
+  }
+
+  // Assigned active projects for this user
+  var projs = (JSON.parse(localStorage.getItem('yt_projects')||'null')||[])
+    .filter(function(p){ return (p.assignedTo||[]).indexOf(currentUser.name) > -1 && p.status === 'active'; });
+
+  // Saved grid state (draft)
+  var state       = tsLoadState();
+  var savedRows   = state.rows    || {};
+  var savedSts    = state.statuses || {};
+
+  // Build project name list: assigned + any extra in saved state
+  var projNames = projs.map(function(p){ return p.name; });
+  Object.keys(savedRows).forEach(function(pn){ if (projNames.indexOf(pn) < 0) projNames.push(pn); });
+  if (!projNames.length) projNames = [''];
+
+  var DSHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // ── HEAD ROW ──
+  var thead = '<thead><tr class="ts-head-row"><th class="ts-col-proj"></th>';
+  days.forEach(function(d) {
+    var ds = d.toISOString().slice(0,10);
+    thead += '<th class="ts-col-day'+(ds===today?' ts-today':'')+'" data-date="'+ds+'">'
+      +DSHORT[d.getDay()]+'<span class="ts-day-num">'+d.getDate()+' '+d.toLocaleString('default',{month:'short'})+'</span></th>';
+  });
+  thead += '<th class="ts-col-total">Total</th></tr>';
+
+  // ── STATUS ROW ──
+  thead += '<tr class="ts-status-row"><td class="ts-status-label">Status</td>';
+  days.forEach(function(d) {
+    var ds   = d.toISOString().slice(0,10);
+    var isHol = !!HOLIDAYS[ds];
+    var def  = isHol ? 'holiday' : 'present';
+    var st   = savedSts[ds] !== undefined ? savedSts[ds] : def;
+    var opts = ['present','wfh','leave','holiday'].map(function(s){
+      return '<option value="'+s+'"'+(st===s?' selected':'')+'>'+{present:'Present',wfh:'WFH',leave:'Leave',holiday:'Holiday'}[s]+'</option>';
+    }).join('');
+    thead += '<td class="ts-status-cell"><select class="ts-status-sel ts-st-'+st
+      +'" data-date="'+ds+'"'+(isHol?' disabled':'')+' onchange="onTsStatusChange(this)">'+opts+'</select></td>';
+  });
+  thead += '<td></td></tr></thead>';
+
+  // ── TBODY ──
+  var tbody = '<tbody id="ts-tbody">';
+  projNames.forEach(function(pn) {
+    tbody += buildTsProjectRow(pn, days, savedRows[pn]||{}, savedSts);
+  });
+  tbody += '</tbody>';
+
+  // ── TFOOT ──
+  var tfoot = '<tfoot><tr class="ts-add-row"><td colspan="'+(days.length+2)+'">'
+    +'<button class="ts-add-proj-btn" onclick="addTsProjectRow()">+ Add Project</button></td></tr>'
+    +'<tr class="ts-totals-row"><td class="ts-totals-label">Daily Total</td>';
+  days.forEach(function(d) {
+    tfoot += '<td class="ts-day-total" id="ts-dt-'+d.toISOString().slice(0,10)+'">—</td>';
+  });
+  tfoot += '<td class="ts-week-total-cell" id="ts-week-total">—</td></tr></tfoot>';
+
+  var grid = document.getElementById('ts-grid');
+  if (!grid) return;
+  grid.innerHTML = thead + tbody + tfoot;
+
+  updateTsProgress();
+}
+
+function buildTsProjectRow(pn, days, savedHours, savedSts) {
+  var rowTotal = 0;
+  var cells = '';
+  days.forEach(function(d) {
+    var ds       = d.toISOString().slice(0,10);
+    var st       = savedSts[ds] || (HOLIDAYS[ds] ? 'holiday' : 'present');
+    var disabled = st === 'leave' || st === 'holiday';
+    var hours    = savedHours[ds] || 0;
+    if (!disabled && hours > 0) rowTotal += hours;
+    cells += '<td class="ts-hours-cell'+(disabled?' ts-cell-disabled':'')+'">'
+      +'<input class="ts-hours-inp" type="number" min="0" max="24" step="0.5"'
+      +' data-date="'+ds+'" data-proj="'+escHtml(pn)+'"'
+      +' value="'+(hours > 0 ? hours : '')+'"'
+      +(disabled ? ' disabled' : '')
+      +' oninput="onTsHoursChange(this)" placeholder="—">'
+      +'</td>';
+  });
+  return '<tr class="ts-proj-row" data-proj="'+escHtml(pn)+'">'
+    +'<td class="ts-proj-name-cell">'
+    +'<span class="ts-proj-nm">'+(pn ? escHtml(pn) : '<em style="color:var(--text-faint)">Project name</em>')+'</span>'
+    +'<button class="ts-remove-btn" onclick="removeTsProjectRow(this)" title="Remove row">×</button>'
+    +'</td>'
+    +cells
+    +'<td class="ts-row-total">'+(rowTotal > 0 ? rowTotal.toFixed(1)+'h' : '—')+'</td>'
+    +'</tr>';
+}
+
+function updateTsProgress() {
+  // Daily totals
+  document.querySelectorAll('.ts-status-sel').forEach(function(sel) {
+    var ds  = sel.dataset.date;
+    var sum = 0;
+    document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]:not(:disabled)').forEach(function(inp){
+      sum += parseFloat(inp.value) || 0;
+    });
+    var el = document.getElementById('ts-dt-'+ds);
+    if (el) {
+      el.textContent = sum > 0 ? sum.toFixed(1)+'h' : '—';
+      el.className = 'ts-day-total'+(sum >= 7.5 && sum <= 9 ? ' ts-dt-green' : sum > 0 && sum < 6 ? ' ts-dt-amber' : '');
+    }
+  });
+
+  // Week total
+  var total = 0;
+  document.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(inp){
+    total += parseFloat(inp.value) || 0;
+  });
+  var target = 45;
+  var pct    = Math.min(100, (total/target)*100);
+  var fill   = document.getElementById('week-progress-fill');
+  if (fill) { fill.style.width = pct+'%'; fill.className = 'week-progress-fill'+(total > target ? ' over' : ''); }
+  var plbl   = document.getElementById('week-progress-label');
+  if (plbl)  plbl.textContent = total.toFixed(1)+'h / '+target+'h';
+  var tot    = document.getElementById('week-total-txt');
+  if (tot)   tot.innerHTML = 'Total: <strong>'+total.toFixed(1)+'h</strong>';
+  var wkTot  = document.getElementById('ts-week-total');
+  if (wkTot) wkTot.textContent = total > 0 ? total.toFixed(1)+'h' : '—';
+}
+
+//  FOCUS TIMER
 var timerSecs=25*60, timerTotal=25*60, timerRunning=false, timerInterval=null, timerSessionsDone=0, timerMode='Work';
 var focusSessions=[];
 
