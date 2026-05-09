@@ -3418,12 +3418,304 @@ function loadProfileStats() {
   });
 }
 
-// Tab renderers — replaced by Tasks 8–12
-function renderPersonalTab(d, edit)  { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
-function renderWorkTab(d, edit)      { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
-function renderBankTab(d, edit)      { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
-function renderEducationTab(d, edit) { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
-function renderDocumentsTab(d)       { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
+// ── PROFILE TABS ──────────────────────────────────────────────
+
+// ── Task 8: Personal Tab ──
+function renderPersonalTab(profData, editMode) {
+  var p = profData.personal || {};
+  var fields = [
+    {key:'dob',           label:'Date of Birth',       type:'date',     value:p.dob||''},
+    {key:'bloodGroup',    label:'Blood Group',         type:'select',   value:p.bloodGroup||'',   opts:['','A+','A-','B+','B-','O+','O-','AB+','AB-']},
+    {key:'marital',       label:'Marital Status',      type:'select',   value:p.marital||'',      opts:['','Single','Married','Divorced','Widowed']},
+    {key:'gender',        label:'Gender',              type:'select',   value:p.gender||currentUser.gender||'', opts:['','Male','Female','Non-binary','Prefer not to say']},
+    {key:'phone',         label:'Phone',               type:'tel',      value:p.phone||''},
+    {key:'address',       label:'Home Address',        type:'textarea', value:p.address||''},
+    {key:'emergencyName', label:'Emergency Contact',   type:'text',     value:p.emergencyName||''},
+    {key:'emergencyPhone',label:'Emergency Phone',     type:'tel',      value:p.emergencyPhone||''},
+    {key:'emergencyRel',  label:'Relationship',        type:'text',     value:p.emergencyRel||''}
+  ];
+  var rows = '<div class="prof-field-row"><span class="prof-field-label">Full Name</span><span class="prof-field-value">'+escHtml(currentUser.name)+'</span></div>';
+  fields.forEach(function(f) {
+    var inp = '';
+    if (editMode) {
+      if (f.type === 'select') {
+        inp = '<select class="prof-field-input" data-key="'+f.key+'">'
+          +f.opts.map(function(o){ return '<option value="'+o+'"'+(f.value===o?' selected':'')+'>'+( o||'— select —')+'</option>'; }).join('')
+          +'</select>';
+      } else if (f.type === 'textarea') {
+        inp = '<textarea class="prof-field-input" data-key="'+f.key+'" rows="3">'+escHtml(f.value)+'</textarea>';
+      } else {
+        inp = '<input class="prof-field-input" type="'+f.type+'" data-key="'+f.key+'" value="'+escHtml(f.value)+'">';
+      }
+    }
+    rows += '<div class="prof-field-row"><span class="prof-field-label">'+f.label+'</span>'
+      +(editMode ? inp : '<span class="prof-field-value">'+(f.value || '<span style="color:var(--text-faint)">Not set</span>')+'</span>')
+      +'</div>';
+  });
+  var hd = '<div class="prof-section-hd"><span class="prof-section-title">Personal Details</span>';
+  if (editMode) {
+    hd += '<div style="display:flex;gap:8px">'
+      +'<button class="btn btn-outline btn-sm" onclick="switchProfTab(\'personal\')">Cancel</button>'
+      +'<button class="btn btn-primary btn-sm" onclick="savePersonalTab()">Save Changes</button></div>';
+  } else {
+    hd += '<button class="btn btn-outline btn-sm" onclick="enterProfEditMode(\'personal\')">Edit</button>';
+  }
+  return hd+'</div>'+rows;
+}
+
+function savePersonalTab() {
+  var data = {};
+  document.querySelectorAll('#prof-tab-content [data-key]').forEach(function(el){ data[el.dataset.key] = el.value; });
+  saveProfileData({personal: data});
+  toast('Personal details saved','success');
+  switchProfTab('personal');
+}
+
+// ── Task 9: Work Info Tab ──
+function renderWorkTab(profData, editMode) {
+  var w        = profData.work || {};
+  var isAdmin  = currentUser.role === 'admin';
+  var empIdx   = DEMO_USERS.findIndex(function(u){ return u.name === currentUser.name; });
+  var empId    = 'YU-'+String(empIdx+1).padStart(3,'0');
+
+  var readOnly = [
+    {label:'Employee ID',   value:empId},
+    {label:'Department',    value:currentUser.dept||'—'},
+    {label:'Designation',   value:currentUser.type||'—'},
+    {label:'Reporting To',  value:currentUser.reportsTo||'—'},
+    {label:'Employment',    value:currentUser.type||'Full-time'}
+  ];
+  var rows = readOnly.map(function(f){
+    return '<div class="prof-field-row"><span class="prof-field-label">'+f.label+'</span>'
+      +'<span class="prof-field-value">'+escHtml(f.value)+'</span></div>';
+  }).join('');
+
+  // Joining date — admin-editable only
+  if (editMode && isAdmin) {
+    rows += '<div class="prof-field-row"><span class="prof-field-label">Joining Date</span>'
+      +'<input class="prof-field-input" type="date" data-key="joiningDate" value="'+(w.joiningDate||'')+'"></div>';
+  } else {
+    rows += '<div class="prof-field-row"><span class="prof-field-label">Joining Date</span>'
+      +'<span class="prof-field-value">'+(w.joiningDate||'<span style="color:var(--text-faint)">Not set</span>')+'</span></div>';
+  }
+
+  // Work location — always employee-editable
+  var locVal = w.workLocation || 'WFH';
+  if (editMode) {
+    rows += '<div class="prof-field-row"><span class="prof-field-label">Work Location</span>'
+      +'<select class="prof-field-input" data-key="workLocation">'
+      +['WFH','Office','Hybrid'].map(function(l){ return '<option value="'+l+'"'+(locVal===l?' selected':'')+'>'+l+'</option>'; }).join('')
+      +'</select></div>';
+  } else {
+    rows += '<div class="prof-field-row"><span class="prof-field-label">Work Location</span>'
+      +'<span class="prof-field-value">'+escHtml(locVal)+'</span></div>';
+  }
+
+  var hd = '<div class="prof-section-hd"><span class="prof-section-title">Work Info</span>';
+  if (editMode) {
+    hd += '<div style="display:flex;gap:8px">'
+      +'<button class="btn btn-outline btn-sm" onclick="switchProfTab(\'work\')">Cancel</button>'
+      +'<button class="btn btn-primary btn-sm" onclick="saveWorkTab()">Save Changes</button></div>';
+  } else {
+    hd += '<button class="btn btn-outline btn-sm" onclick="enterProfEditMode(\'work\')">Edit</button>';
+  }
+  return hd+'</div>'+rows;
+}
+
+function saveWorkTab() {
+  var data = {};
+  document.querySelectorAll('#prof-tab-content [data-key]').forEach(function(el){ data[el.dataset.key] = el.value; });
+  saveProfileData({work: data});
+  toast('Work info saved','success');
+  switchProfTab('work');
+}
+
+// ── Task 10: Bank & PAN Tab ──
+function maskValue(str, showLast) {
+  if (!str) return '<span style="color:var(--text-faint)">Not set</span>';
+  showLast = showLast || 4;
+  if (str.length <= showLast) return str;
+  return '•'.repeat(str.length - showLast) + str.slice(-showLast);
+}
+
+function renderBankTab(profData, editMode) {
+  var b      = profData.bank || {};
+  var fields = [
+    {key:'bankName',    label:'Bank Name',     type:'text',   value:b.bankName||'',    mask:false},
+    {key:'accountNo',   label:'Account No.',   type:'text',   value:b.accountNo||'',   mask:true},
+    {key:'ifsc',        label:'IFSC Code',     type:'text',   value:b.ifsc||'',        mask:false},
+    {key:'accountType', label:'Account Type',  type:'select', value:b.accountType||'', mask:false, opts:['','Savings','Current']},
+    {key:'pan',         label:'PAN Number',    type:'text',   value:b.pan||'',         mask:true}
+  ];
+  var rows = fields.map(function(f) {
+    if (editMode) {
+      var inp = f.type === 'select'
+        ? '<select class="prof-field-input" data-key="'+f.key+'">'
+            +f.opts.map(function(o){ return '<option value="'+o+'"'+(f.value===o?' selected':'')+'>'+( o||'— select —')+'</option>'; }).join('')
+            +'</select>'
+        : '<input class="prof-field-input" type="text" data-key="'+f.key+'" value="'+escHtml(f.value)+'"'
+            +(f.key==='pan'||f.key==='ifsc'?' style="text-transform:uppercase"':'')+' placeholder="'+f.label+'">';
+      return '<div class="prof-field-row"><span class="prof-field-label">'+f.label+'</span>'+inp+'</div>';
+    }
+    var disp = f.mask ? maskValue(f.value) : (f.value || '<span style="color:var(--text-faint)">Not set</span>');
+    return '<div class="prof-field-row"><span class="prof-field-label">'+f.label+'</span>'
+      +'<span class="prof-field-value'+(f.mask&&f.value?' masked':'')+'">'+disp+'</span></div>';
+  }).join('');
+
+  var hd = '<div class="prof-section-hd"><span class="prof-section-title">Bank &amp; PAN Details</span>';
+  if (editMode) {
+    hd += '<div style="display:flex;gap:8px">'
+      +'<button class="btn btn-outline btn-sm" onclick="switchProfTab(\'bank\')">Cancel</button>'
+      +'<button class="btn btn-primary btn-sm" onclick="saveBankTab()">Save Changes</button></div>';
+  } else {
+    hd += '<button class="btn btn-outline btn-sm" onclick="enterProfEditMode(\'bank\')">Edit</button>';
+  }
+  return hd+'</div>'+rows;
+}
+
+function saveBankTab() {
+  var data = {};
+  document.querySelectorAll('#prof-tab-content [data-key]').forEach(function(el){ data[el.dataset.key] = el.value; });
+  if (data.pan)  data.pan  = data.pan.toUpperCase();
+  if (data.ifsc) data.ifsc = data.ifsc.toUpperCase();
+  saveProfileData({bank: data});
+  toast('Bank details saved','success');
+  switchProfTab('bank');
+}
+
+// ── Task 11: Education Tab ──
+function renderEducationTab(profData, editMode) {
+  var edu = profData.education || [];
+  var hd  = '<div class="prof-section-hd"><span class="prof-section-title">Education</span>';
+  if (editMode) {
+    hd += '<div style="display:flex;gap:8px">'
+      +'<button class="btn btn-outline btn-sm" onclick="switchProfTab(\'education\')">Cancel</button>'
+      +'<button class="btn btn-primary btn-sm" onclick="saveEducationTab()">Save Changes</button></div>';
+  } else {
+    hd += '<button class="btn btn-outline btn-sm" onclick="enterProfEditMode(\'education\')">Edit</button>';
+  }
+  hd += '</div>';
+
+  if (!edu.length && !editMode) {
+    return hd + '<div class="empty"><div class="empty-text">No education entries yet. Click Edit to add.</div></div>';
+  }
+
+  var entries = edu.map(function(e, i) {
+    if (editMode) {
+      return '<div class="edu-entry" data-idx="'+i+'">'
+        +'<button class="edu-entry-del" onclick="removeEduEntry(this)" title="Remove">×</button>'
+        +'<div style="display:grid;grid-template-columns:1fr 100px;gap:10px;margin-bottom:10px">'
+        +'<div><label style="font-size:11px;font-weight:600;color:var(--text-muted)">Degree / Qualification</label>'
+        +'<input class="prof-field-input" style="margin-top:4px" type="text" data-edu="'+i+'" data-field="degree" value="'+escHtml(e.degree||'')+'"></div>'
+        +'<div><label style="font-size:11px;font-weight:600;color:var(--text-muted)">Year</label>'
+        +'<input class="prof-field-input" style="margin-top:4px" type="text" data-edu="'+i+'" data-field="year" value="'+escHtml(e.year||'')+'"></div>'
+        +'</div>'
+        +'<div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:var(--text-muted)">Institution / University</label>'
+        +'<input class="prof-field-input" style="margin-top:4px" type="text" data-edu="'+i+'" data-field="institution" value="'+escHtml(e.institution||'')+'"></div>'
+        +'<div><label style="font-size:11px;font-weight:600;color:var(--text-muted)">Grade / Score</label>'
+        +'<input class="prof-field-input" style="margin-top:4px" type="text" data-edu="'+i+'" data-field="grade" value="'+escHtml(e.grade||'')+'"></div>'
+        +'</div>';
+    }
+    return '<div class="edu-entry">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--text-dark)">'+escHtml(e.degree||'—')+'</div>'
+      +'<div style="font-size:12px;color:var(--text-muted);margin-top:3px">'+escHtml(e.institution||'—')+'</div>'
+      +'<div style="font-size:11px;color:var(--text-faint);margin-top:2px">'+escHtml(e.year||'')+(e.grade?' · '+escHtml(e.grade):'')+'</div>'
+      +'</div>';
+  }).join('');
+
+  var addBtn = editMode ? '<button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="addEduEntry()">+ Add Education</button>' : '';
+  return hd + entries + addBtn;
+}
+
+function addEduEntry() {
+  var profData = loadProfileData();
+  var edu = (profData.education || []).concat([{degree:'',institution:'',year:'',grade:''}]);
+  saveProfileData({education: edu});
+  enterProfEditMode('education');
+}
+
+function removeEduEntry(btn) {
+  var idx      = parseInt(btn.closest('.edu-entry').dataset.idx);
+  var profData = loadProfileData();
+  var edu      = profData.education || [];
+  edu.splice(idx, 1);
+  saveProfileData({education: edu});
+  enterProfEditMode('education');
+}
+
+function saveEducationTab() {
+  var entries = [];
+  document.querySelectorAll('#prof-tab-content .edu-entry[data-idx]').forEach(function(entry) {
+    var e = {};
+    entry.querySelectorAll('[data-field]').forEach(function(inp){ e[inp.dataset.field] = inp.value.trim(); });
+    if (e.degree || e.institution) entries.push(e);
+  });
+  saveProfileData({education: entries});
+  toast('Education saved','success');
+  switchProfTab('education');
+}
+
+// ── Task 12: Documents Tab ──
+var PROF_DOC_SLOTS = [
+  {key:'aadhaar',    name:'Aadhaar Card'},
+  {key:'pan',        name:'PAN Card'},
+  {key:'passport',   name:'Passport'},
+  {key:'offerLetter',name:'Offer Letter'},
+  {key:'degree',     name:'Degree Certificate'},
+  {key:'other',      name:'Other Document'}
+];
+
+function renderDocumentsTab(profData) {
+  var docs = profData.documents || {};
+  var hd   = '<div class="prof-section-hd"><span class="prof-section-title">Documents</span>'
+    +'<span style="font-size:11px;color:var(--text-faint)">PDF, JPG, PNG &mdash; max 2 MB each</span></div>';
+  var slots = PROF_DOC_SLOTS.map(function(s) {
+    var doc = docs[s.key];
+    return '<div class="doc-slot">'
+      +'<span class="doc-slot-name">'+s.name+'</span>'
+      +(doc
+        ? '<span class="doc-slot-status uploaded">'+escHtml(doc.name)+'</span>'
+          +'<div class="doc-actions">'
+          +'<a class="btn btn-outline btn-sm" href="'+doc.data+'" target="_blank" rel="noopener">View</a>'
+          +'<button class="btn btn-danger btn-sm" onclick="removeDoc(\''+s.key+'\')">Remove</button>'
+          +'</div>'
+        : '<span class="doc-slot-status">Not uploaded</span>'
+          +'<div class="doc-actions">'
+          +'<label class="btn btn-outline btn-sm" style="cursor:pointer">Upload'
+          +'<input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadDoc(this,\''+s.key+'\')">'
+          +'</label>'
+          +'</div>'
+      )
+      +'</div>';
+  }).join('');
+  return hd + slots;
+}
+
+function uploadDoc(input, key) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) { toast('File too large — max 2 MB','error'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var profData = loadProfileData();
+    var docs     = profData.documents || {};
+    docs[key]    = {name: file.name, data: e.target.result};
+    saveProfileData({documents: docs});
+    toast(file.name+' uploaded','success');
+    switchProfTab('documents');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeDoc(key) {
+  if (!confirm('Remove this document?')) return;
+  var profData     = loadProfileData();
+  var docs         = profData.documents || {};
+  delete docs[key];
+  saveProfileData({documents: docs});
+  toast('Document removed','success');
+  switchProfTab('documents');
+}
 
 var activeProfTab = 'personal';
 
