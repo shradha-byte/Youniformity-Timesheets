@@ -842,7 +842,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="view" id="view-timesheet">
       <div class="page-header">
         <div class="page-title">Weekly Timesheet</div>
-        <div class="page-sub">Log your hours and tasks for each working day</div>
+        <div class="page-sub">Log your hours by project for each working day</div>
       </div>
 
       <!-- Week nav + progress -->
@@ -855,7 +855,7 @@ textarea{resize:vertical;min-height:70px}
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-outline btn-sm" onclick="saveDraft()">Save Draft</button>
-            <button class="btn btn-gold btn-sm" onclick="submitWeek()">Submit Week</button>
+            <button class="btn btn-gold btn-sm" onclick="submitWeek()">Submit for Approval</button>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
@@ -865,9 +865,11 @@ textarea{resize:vertical;min-height:70px}
         <div class="week-progress-bar"><div class="week-progress-fill" id="week-progress-fill" style="width:0%"></div></div>
       </div>
 
-      <!-- Day rows -->
+      <!-- Grid card -->
       <div class="card">
-        <div id="week-rows"></div>
+        <div style="overflow-x:auto">
+          <table class="ts-grid" id="ts-grid"></table>
+        </div>
         <div class="week-footer">
           <div class="week-total-txt" id="week-total-txt">Total: <strong>0h</strong></div>
           <div style="display:flex;gap:8px">
