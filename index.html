@@ -3776,6 +3776,83 @@ function updateTsProgress() {
   if (wkTot) wkTot.textContent = total > 0 ? total.toFixed(1)+'h' : '—';
 }
 
+function onTsStatusChange(sel) {
+  var ds  = sel.dataset.date;
+  var st  = sel.value;
+  // Update colour class on the select
+  sel.className = sel.className.replace(/ts-st-\w+/, '') + ' ts-st-'+st;
+  // Enable/disable column inputs
+  var disabled = st === 'leave' || st === 'holiday';
+  document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]').forEach(function(inp) {
+    inp.disabled = disabled;
+    if (disabled) inp.value = '';
+    inp.closest('td').className = 'ts-hours-cell'+(disabled ? ' ts-cell-disabled' : '');
+  });
+  // Update row totals
+  document.querySelectorAll('.ts-proj-row').forEach(function(tr) {
+    var rowTotal = 0;
+    tr.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(i){ rowTotal += parseFloat(i.value)||0; });
+    var tc = tr.querySelector('.ts-row-total');
+    if (tc) tc.textContent = rowTotal > 0 ? rowTotal.toFixed(1)+'h' : '—';
+  });
+  updateTsProgress();
+  tsSaveState();
+}
+
+function onTsHoursChange(inp) {
+  // Update row total
+  var row = inp.closest('tr.ts-proj-row');
+  if (row) {
+    var rowTotal = 0;
+    row.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(i){ rowTotal += parseFloat(i.value)||0; });
+    var tc = row.querySelector('.ts-row-total');
+    if (tc) tc.textContent = rowTotal > 0 ? rowTotal.toFixed(1)+'h' : '—';
+  }
+  updateTsProgress();
+  tsSaveState();
+}
+
+function addTsProjectRow() {
+  var days = [];
+  document.querySelectorAll('.ts-head-row .ts-col-day').forEach(function(th){
+    days.push(new Date(th.dataset.date+'T12:00:00'));
+  });
+  var savedSts = {};
+  document.querySelectorAll('.ts-status-sel').forEach(function(sel){ savedSts[sel.dataset.date] = sel.value; });
+
+  // Projects already in grid
+  var inGrid = [];
+  document.querySelectorAll('.ts-proj-row').forEach(function(tr){ if (tr.dataset.proj) inGrid.push(tr.dataset.proj); });
+
+  // Assigned projects not yet added
+  var available = (JSON.parse(localStorage.getItem('yt_projects')||'null')||[])
+    .filter(function(p){ return (p.assignedTo||[]).indexOf(currentUser.name) > -1 && p.status === 'active' && inGrid.indexOf(p.name) < 0; });
+
+  var pn;
+  if (available.length) {
+    var opts = available.map(function(p,i){ return (i+1)+'. '+p.name; }).join('\n');
+    var choice = window.prompt('Add project — enter number or type a name:\n\n'+opts, '1');
+    if (!choice) return;
+    var idx = parseInt(choice.trim()) - 1;
+    pn = (!isNaN(idx) && idx >= 0 && idx < available.length) ? available[idx].name : choice.trim();
+  } else {
+    pn = window.prompt('No unassigned projects available. Enter a custom project name:');
+  }
+  if (!pn || !pn.trim()) return;
+  pn = pn.trim();
+
+  var tbody = document.getElementById('ts-tbody');
+  if (tbody) {
+    tbody.insertAdjacentHTML('beforeend', buildTsProjectRow(pn, days, {}, savedSts));
+    tsSaveState();
+  }
+}
+
+function removeTsProjectRow(btn) {
+  var row = btn.closest('tr.ts-proj-row');
+  if (row) { row.remove(); tsSaveState(); updateTsProgress(); }
+}
+
 //  FOCUS TIMER
 var timerSecs=25*60, timerTotal=25*60, timerRunning=false, timerInterval=null, timerSessionsDone=0, timerMode='Work';
 var focusSessions=[];
