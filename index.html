@@ -2344,7 +2344,7 @@ function showApp() {
   loadAnnouncements();
   loadMyTasks();
   loadMoodToday();
-  renderWeek();
+  renderTimesheetGrid();
 }
 
 function logout() {
@@ -2368,6 +2368,7 @@ function go(viewName, navEl) {
     if (found) found.classList.add('active');
   }
   if (viewName==='history')         { setupHistoryMonths(); loadHistory(); }
+  if (viewName==='timesheet')       { renderTimesheetGrid(); }
   if (viewName==='holidays')        { renderHolidayTab(); }
   if (viewName==='leaves')          { loadLeaves(); computeLeaveBalance(); }
   if (viewName==='tasks')           { taskFilter='all'; document.querySelectorAll('.task-tab').forEach(function(t,i){t.classList.toggle('active',i===0);}); loadTasksView(); }
@@ -2506,146 +2507,7 @@ function getWeekStart(date) {
 function changeWeek(dir) {
   currentWeekStart=new Date(currentWeekStart);
   currentWeekStart.setDate(currentWeekStart.getDate()+dir*7);
-  renderWeek();
-}
-
-function renderWeek() {
-  var ws=new Date(currentWeekStart);
-  var today=new Date().toISOString().slice(0,10);
-  var thisWS=getWeekStart(new Date());
-  var nextBtn=document.getElementById('btn-next-week');
-  if(nextBtn){ nextBtn.disabled=currentWeekStart>=thisWS; nextBtn.style.opacity=currentWeekStart>=thisWS?'.35':'1'; }
-  var we=new Date(ws); we.setDate(we.getDate()+6);
-  var fmt=function(d){ return d.getDate()+' '+d.toLocaleString('default',{month:'short'}); };
-  var lbl=document.getElementById('week-label');
-  if(lbl) lbl.textContent='Week of '+fmt(ws)+'  '+fmt(we)+', '+we.getFullYear();
-  var month=ws.toISOString().slice(0,7), month2=we.toISOString().slice(0,7);
-  weekLogsCache={};
-  api('getMyLogs',{name:currentUser.name,month:month}).then(function(res){
-    (res.logs||[]).forEach(function(l){ weekLogsCache[l.date]=l; });
-    if(month!==month2){
-      return api('getMyLogs',{name:currentUser.name,month:month2}).then(function(res2){
-        (res2.logs||[]).forEach(function(l){ weekLogsCache[l.date]=l; });
-        buildWeekRows(ws,today);
-      });
-    }
-    buildWeekRows(ws,today);
-  });
-}
-
-function buildWeekRows(ws,today) {
-  var container=document.getElementById('week-rows');
-  if(!container) return;
-  container.innerHTML='';
-  var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  for(var i=0;i<7;i++){
-    var d=new Date(ws); d.setDate(d.getDate()+i);
-    var dStr=d.toISOString().slice(0,10);
-    var dow=d.getDay(), isWknd=dow===0||dow===6, isHol=!!HOLIDAYS[dStr];
-    var isToday=dStr===today, isFuture=dStr>today;
-    var log=weekLogsCache[dStr];
-    var row=document.createElement('div');
-    row.className='day-row'+(isToday?' day-today':'')+(isHol?' day-holiday':'')+(isWknd&&!isHol?' day-weekend':'');
-    row.dataset.date=dStr;
-    var dayInfo=document.createElement('div'); dayInfo.className='day-info';
-    dayInfo.innerHTML='<div class="day-name">'+DNAMES[dow]+(isToday?'<span class="day-today-dot"></span>':'')+'</div><div class="day-date">'+d.getDate()+' '+d.toLocaleString('default',{month:'short'})+'</div>';
-    if(isHol){
-      row.appendChild(dayInfo);
-      var hc=document.createElement('div'); hc.className='holiday-content';
-      hc.innerHTML='<div class="holiday-dot"></div><div><div class="holiday-name">'+HOLIDAYS[dStr].name+'</div><div class="holiday-type">'+(HOLIDAYS[dStr].type==='national'?'National Holiday':'Public Holiday')+'</div></div>';
-      row.appendChild(hc); container.appendChild(row); continue;
-    }
-    if(isWknd){
-      row.appendChild(dayInfo);
-      var wc=document.createElement('div'); wc.className='weekend-content';
-      wc.innerHTML='&mdash; Weekend'; row.appendChild(wc); container.appendChild(row); continue;
-    }
-    // Working day
-    var existTasks=[];
-    if(log&&log.tasks){ try{existTasks=JSON.parse(log.tasks);}catch(e){} }
-    var wfhVal=log?log.wfh||'office':'office';
-    row.appendChild(dayInfo);
-    var workDiv=document.createElement('div'); workDiv.className='day-work';
-    workDiv.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:var(--text-muted)">Mode:</span><div class="wfh-toggle" id="wfh-'+dStr+'"><button class="wfh-opt active-wfh" onclick="setWFH(\''+dStr+'\',\'wfh\',this)">WFH</button></div></div>'
-      +'<div class="chip-list" id="chips-'+dStr+'"></div>'
-      +'<input class="notes-input" type="text" placeholder="Notes (optional)..." value="'+(log&&log.notes?escHtml(log.notes):'')+'" data-date="'+dStr+'"'+(isFuture?' disabled':'')+' onchange="autosaveDraft(\''+dStr+'\')">';
-    row.appendChild(workDiv);
-    var statusDiv=document.createElement('div'); statusDiv.className='day-status';
-    if(log) statusDiv.innerHTML=badgeHTML(log.status);
-    row.appendChild(statusDiv);
-    container.appendChild(row);
-    renderChips(dStr,existTasks,isFuture);
-  }
-  updateWeekProgress();
-}
-
-function setWFH(date,mode,btn) {
-  var tog=document.getElementById('wfh-'+date);
-  if(!tog) return;
-  tog.querySelectorAll('.wfh-opt').forEach(function(b){ b.classList.remove('active-wfh','active-office'); });
-  btn.classList.add(mode==='wfh'?'active-wfh':'active-office');
-}
-
-function getWFHMode(date) {
-  return 'wfh'; // Company is fully WFH
-}
-
-function renderChips(date,tasks,disabled) {
-  var container=document.getElementById('chips-'+date);
-  if(!container) return;
-  container.innerHTML='';
-  tasks.forEach(function(t,i){
-    var row=document.createElement('div'); row.className='task-row';
-    var nm=document.createElement('span'); nm.className='task-row-name'; nm.title=t.task; nm.textContent=t.task;
-    var inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.max='16'; inp.step='0.5';
-    inp.className='task-hours-input'; inp.dataset.date=date; inp.dataset.task=t.task; inp.dataset.idx=i;
-    inp.value=t.hours>0?t.hours:''; inp.placeholder='hrs';
-    if(disabled) inp.disabled=true;
-    inp.addEventListener('input',function(){ updateWeekProgress(); updateDayTotal(date); });
-    inp.addEventListener('change',function(){ autosaveDraft(date); });
-    var unit=document.createElement('span'); unit.className='task-row-unit'; unit.textContent='h';
-    row.appendChild(nm); row.appendChild(inp); row.appendChild(unit);
-    if(!disabled){
-      var rm=document.createElement('button'); rm.className='task-row-remove'; rm.title='Remove'; rm.textContent='Ã—';
-      rm.onclick=function(){ removeChip(date,i); }; row.appendChild(rm);
-    }
-    container.appendChild(row);
-  });
-  if(!disabled){
-    var footer=document.createElement('div'); footer.className='task-rows-footer';
-    var addBtn=document.createElement('button'); addBtn.className='add-chip-btn'; addBtn.textContent='+ task';
-    addBtn.onclick=function(){ openTaskModal(date); };
-    var totalEl=document.createElement('span'); totalEl.className='day-task-total'; totalEl.id='day-total-'+date;
-    footer.appendChild(addBtn); footer.appendChild(totalEl); container.appendChild(footer);
-  }
-  updateDayTotal(date); updateWeekProgress();
-}
-
-function getChipsForDate(date) {
-  var c=document.getElementById('chips-'+date); if(!c) return [];
-  return Array.from(c.querySelectorAll('.task-hours-input')).map(function(inp){
-    return {task:inp.dataset.task, hours:parseFloat(inp.value)||0};
-  });
-}
-
-function updateDayTotal(date) {
-  var total=getChipsForDate(date).reduce(function(s,t){return s+t.hours;},0);
-  var el=document.getElementById('day-total-'+date);
-  if(el) el.textContent=total>0?total.toFixed(1)+'h total':'';
-}
-
-function removeChip(date,idx) {
-  var tasks=getChipsForDate(date); tasks.splice(idx,1); renderChips(date,tasks,false);
-}
-
-function updateWeekProgress() {
-  var total=0;
-  document.querySelectorAll('.task-hours-input').forEach(function(inp){ total+=parseFloat(inp.value)||0; });
-  var target=45, pct=Math.min(100,(total/target)*100);
-  var fill=document.getElementById('week-progress-fill');
-  if(fill){ fill.style.width=pct+'%'; fill.className='week-progress-fill'+(total>target?' over':''); }
-  var lbl=document.getElementById('week-progress-label'); if(lbl) lbl.textContent=total.toFixed(1)+'h / '+target+'h';
-  var tot=document.getElementById('week-total-txt'); if(tot) tot.innerHTML='Total: <strong>'+total.toFixed(1)+'h</strong>';
+  renderTimesheetGrid();
 }
 
 function loadMyTasks() {
@@ -2699,47 +2561,47 @@ function confirmTaskSelection() {
   closeModal('modal-task');
 }
 
-function collectWeekEntries() {
-  var byDate={};
-  document.querySelectorAll('.task-hours-input').forEach(function(inp){
-    var date=inp.dataset.date, hours=parseFloat(inp.value)||0;
-    if(!byDate[date]) byDate[date]={tasks:[],total:0};
-    byDate[date].tasks.push({task:inp.dataset.task,hours:hours});
-    byDate[date].total+=hours;
+function collectTsEntries() {
+  var statuses = {};
+  document.querySelectorAll('.ts-status-sel').forEach(function(sel){ statuses[sel.dataset.date] = sel.value; });
+  var byDate = {};
+  document.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(inp) {
+    var date = inp.dataset.date, proj = inp.dataset.proj, hours = parseFloat(inp.value)||0;
+    if (!hours) return;
+    if (!byDate[date]) byDate[date] = {tasks:[], total:0};
+    byDate[date].tasks.push({task:proj, hours:hours});
+    byDate[date].total += hours;
   });
-  return Object.entries(byDate).filter(function(e){ return e[1].total>0; }).map(function(e){
-    var date=e[0], d=e[1];
-    var row=document.querySelector('.day-row[data-date="'+date+'"]');
-    var notes=row?(row.querySelector('.notes-input')||{}).value||'':'';
-    var wfh=getWFHMode(date);
-    return {date:date, hours:d.total, tasks:JSON.stringify(d.tasks), notes:notes, wfh:wfh};
+  var entries = [];
+  Object.keys(byDate).forEach(function(date) {
+    var d  = byDate[date];
+    if (!d.total) return;
+    var st = statuses[date] || 'present';
+    entries.push({date:date, hours:d.total, tasks:JSON.stringify(d.tasks), notes:'', wfh:st==='wfh'?'wfh':'office', dayStatus:st});
   });
-}
-
-function autosaveDraft(date) {
-  var chips=getChipsForDate(date);
-  var total=chips.reduce(function(s,t){return s+t.hours;},0);
-  if(total<=0) return;
-  var row=document.querySelector('.day-row[data-date="'+date+'"]');
-  var notes=row?(row.querySelector('.notes-input')||{}).value||'':'';
-  api('submitLog',{name:currentUser.name,date:date,hours:total,tasks:JSON.stringify(chips),notes:notes,wfh:getWFHMode(date),status:'draft'}).then(function(){});
+  return entries;
 }
 
 function saveDraft() {
-  var entries=collectWeekEntries();
-  if(!entries.length){toast('Fill at least one day first','error');return;}
-  Promise.all(entries.map(function(e){return api('submitLog',Object.assign({name:currentUser.name},e,{status:'draft'}));}))
-    .then(function(results){ toast('Draft saved for '+results.length+' day(s)','success'); });
+  tsSaveState();
+  var entries = collectTsEntries();
+  if (!entries.length) { toast('Add hours to at least one project first','error'); return; }
+  Promise.all(entries.map(function(e){
+    return api('submitLog', Object.assign({name:currentUser.name}, e, {status:'draft'}));
+  })).then(function(results){ toast('Draft saved — '+results.length+' day(s)','success'); });
 }
 
 function submitWeek() {
-  var entries=collectWeekEntries();
-  if(!entries.length){toast('Fill at least one day first','error');return;}
-  Promise.all(entries.map(function(e){return api('submitLog',Object.assign({name:currentUser.name},e,{status:'pending'}));}))
-    .then(function(results){
-      toast(results.length+' day(s) submitted for approval','success');
-      renderWeek(); loadDashboardStats();
-    });
+  tsSaveState();
+  var entries = collectTsEntries();
+  if (!entries.length) { toast('Add hours to at least one project first','error'); return; }
+  Promise.all(entries.map(function(e){
+    return api('submitLog', Object.assign({name:currentUser.name}, e, {status:'pending'}));
+  })).then(function(results){
+    toast(results.length+' day(s) submitted for approval','success');
+    renderTimesheetGrid();
+    loadDashboardStats();
+  });
 }
 
 //  HISTORY 
