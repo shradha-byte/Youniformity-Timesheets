@@ -1149,21 +1149,32 @@ textarea{resize:vertical;min-height:70px}
 
     <!--  PROFILE  -->
     <div class="view" id="view-profile">
-      <div class="page-header"><div class="page-title">My Profile</div><div class="page-sub">Your attendance summary and statistics</div></div>
-      <div class="profile-grid" id="profile-grid">
+      <div class="page-header">
+        <div class="page-title">My Profile</div>
+        <div class="page-sub">Manage your personal details, documents, and work information</div>
+      </div>
+      <div class="prof-layout">
+
+        <!-- Left sidebar -->
         <div>
           <div class="profile-card">
             <div class="profile-top">
-              <div class="profile-avatar" id="prof-av"></div>
+              <div class="prof-photo-wrap" onclick="document.getElementById('prof-photo-input').click()">
+                <div class="profile-avatar" id="prof-av"></div>
+                <img class="prof-photo-img" id="prof-photo-img" alt="Profile photo">
+              </div>
+              <input type="file" id="prof-photo-input" accept="image/*" style="display:none" onchange="onProfPhotoChange(this)">
               <div class="profile-nm" id="prof-name"></div>
               <div class="profile-dept" id="prof-dept"></div>
               <div class="profile-type" id="prof-type"></div>
+              <div style="margin-top:10px">
+                <button class="btn btn-outline btn-sm" style="font-size:11px" onclick="document.getElementById('prof-photo-input').click()">Change Photo</button>
+              </div>
             </div>
             <div id="profile-stats"></div>
           </div>
-        </div>
-        <div>
-          <div class="card" style="margin-bottom:14px">
+
+          <div class="card" style="margin-top:14px">
             <div class="card-header"><div class="card-title">Activity Heatmap</div><div class="card-sub">Hours logged &mdash; last 12 weeks</div></div>
             <div class="card-body">
               <div style="display:flex;gap:4px;margin-bottom:8px;font-size:10.5px;color:var(--text-faint)">
@@ -1171,15 +1182,34 @@ textarea{resize:vertical;min-height:70px}
               </div>
               <div class="heatmap-wrap"><div class="heatmap-grid" id="heatmap-grid"></div></div>
               <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:var(--text-muted)">
-                Less <div style="width:11px;height:11px;border-radius:2px;background:#EBEDF0"></div><div style="width:11px;height:11px;border-radius:2px;background:#9BE9A8"></div><div style="width:11px;height:11px;border-radius:2px;background:#40C463"></div><div style="width:11px;height:11px;border-radius:2px;background:#216E39"></div> More
+                Less
+                <div style="width:11px;height:11px;border-radius:2px;background:#EBEDF0"></div>
+                <div style="width:11px;height:11px;border-radius:2px;background:#9BE9A8"></div>
+                <div style="width:11px;height:11px;border-radius:2px;background:#40C463"></div>
+                <div style="width:11px;height:11px;border-radius:2px;background:#216E39"></div>
+                More
               </div>
             </div>
           </div>
-          <div class="card">
+
+          <div class="card" style="margin-top:14px">
             <div class="card-header"><div class="card-title">Monthly Summary</div></div>
             <div id="monthly-summary"></div>
           </div>
         </div>
+
+        <!-- Right: tabs -->
+        <div class="card" style="overflow:visible">
+          <div class="prof-tabs" id="prof-tabs">
+            <button class="prof-tab-btn active" data-tab="personal"   onclick="switchProfTab('personal',this)">Personal</button>
+            <button class="prof-tab-btn"        data-tab="work"       onclick="switchProfTab('work',this)">Work Info</button>
+            <button class="prof-tab-btn"        data-tab="bank"       onclick="switchProfTab('bank',this)">Bank &amp; PAN</button>
+            <button class="prof-tab-btn"        data-tab="education"  onclick="switchProfTab('education',this)">Education</button>
+            <button class="prof-tab-btn"        data-tab="documents"  onclick="switchProfTab('documents',this)">Documents</button>
+          </div>
+          <div id="prof-tab-content"></div>
+        </div>
+
       </div>
     </div>
 
