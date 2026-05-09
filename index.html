@@ -132,11 +132,6 @@ body{font-family:'DM Sans','Noto Sans JP','Segoe UI',system-ui,sans-serif;backgr
 .mood-btn.selected.m-stressed{border-color:#EF4444;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
 .mood-emoji{font-size:24px}
 .mood-label{font-size:11px;font-weight:600;color:var(--text-muted)}
-/* WFH TOGGLE */
-.wfh-toggle{display:flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
-.wfh-opt{padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--text-muted);background:transparent;border:none;font-family:inherit;transition:.15s;white-space:nowrap}
-.wfh-opt.active-wfh{background:#EFF6FF;color:#1D4ED8}
-.wfh-opt.active-office{background:var(--green-bg);color:var(--brand)}
 /* WEEKLY SHEET */
 .week-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .week-nav{display:flex;align-items:center;gap:8px}
@@ -148,40 +143,10 @@ body{font-family:'DM Sans','Noto Sans JP','Segoe UI',system-ui,sans-serif;backgr
 .week-progress-bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin:8px 0 4px}
 .week-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-light));transition:width .5s}
 .week-progress-fill.over{background:linear-gradient(90deg,var(--gold),#E8B84B)}
-/* DAY ROWS */
-.day-row{display:grid;grid-template-columns:76px 1fr auto;align-items:start;border-bottom:1px solid var(--border);transition:background .15s;background:var(--surface)}
-.day-row:last-child{border-bottom:none}
-.day-row:hover:not(.day-holiday):not(.day-weekend){background:#FAFEF9}
-.day-row.day-today{border-left:3px solid var(--brand)}
-.day-info{padding:14px 0 14px 14px;flex-shrink:0}
-.day-name{font-size:12.5px;font-weight:700;color:var(--text-dark)}
-.day-date{font-size:11px;color:var(--text-muted);margin-top:1px}
-.day-today-dot{display:inline-block;width:6px;height:6px;background:var(--brand);border-radius:50%;margin-left:4px;vertical-align:middle}
-.day-work{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
-.chip-list{display:flex;flex-direction:column;gap:3px;padding:2px 0}
-.task-row{display:flex;align-items:center;gap:8px}
-.task-row-name{flex:1;font-size:12.5px;font-weight:600;color:var(--text-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.task-hours-input{width:62px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-dark);background:#fff;outline:none;transition:.15s;text-align:center}
-.task-hours-input:focus{border-color:var(--brand)}
-.task-hours-input::-webkit-inner-spin-button,.task-hours-input::-webkit-outer-spin-button{opacity:0}
-.task-row-remove{background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:14px;padding:0 2px;line-height:1;transition:.1s;flex-shrink:0}
-.task-row-remove:hover{color:var(--red)}
-.task-rows-footer{display:flex;align-items:center;gap:10px;padding:3px 0;flex-wrap:wrap}
-.day-task-total{font-size:11px;font-weight:700;color:var(--brand);margin-left:auto}
-.add-chip-btn{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--brand);background:none;border:1px dashed var(--green-border);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:inherit;transition:.15s}
-.add-chip-btn:hover{background:var(--green-bg);border-color:var(--brand)}
-.notes-input{width:100%;padding:5px 9px;border:1.5px solid transparent;border-radius:6px;font-family:inherit;font-size:12px;color:var(--text-muted);background:#F9FAFB;outline:none;transition:.15s}
-.notes-input:focus{border-color:var(--green-border);background:#fff;color:var(--text-body)}
-.notes-input::placeholder{color:#C4C9D4}
-.day-status{padding:12px 14px 12px 0;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.day-holiday{background:linear-gradient(90deg,#FFFBEB,#FFFDF5);border-left:3px solid var(--gold)}
-.day-holiday .day-name{color:var(--gold)}
 .holiday-content{padding:14px 12px;display:flex;align-items:center;gap:8px;grid-column:2/-1}
 .holiday-dot{width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0}
 .holiday-name{font-size:13px;font-weight:700;color:var(--amber)}
 .holiday-type{font-size:11px;color:var(--text-muted);margin-top:1px}
-.day-weekend{background:#F9F9F9}
-.day-weekend .day-name{color:#C4C9D4}
 .weekend-content{padding:14px 12px;display:flex;align-items:center;gap:6px;grid-column:2/-1;color:#D1D5DB;font-size:12.5px;font-weight:600}
 .week-footer{padding:14px 18px;background:var(--green-bg2);border-top:1px solid var(--green-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .week-total-txt{font-size:14px;font-weight:800;color:var(--text-dark)}
@@ -1447,21 +1412,6 @@ textarea{resize:vertical;min-height:70px}
   </main>
 </div>
 
-<!-- MODAL: TASKS -->
-<div class="overlay" id="modal-task">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head">
-      <div><div class="modal-title" id="modal-task-title">Log Tasks</div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">Select tasks assigned to you</div></div>
-      <button class="modal-close" onclick="closeModal('modal-task')">&#215;</button>
-    </div>
-    <div class="modal-body" id="modal-task-body" style="max-height:360px;overflow-y:auto;padding:8px 22px"></div>
-    <div class="modal-foot">
-      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-task')">Cancel</button>
-      <button class="btn btn-gold btn-sm" onclick="confirmTaskSelection()">Confirm</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: ADD TASK -->
 <div class="overlay" id="modal-add-task">
   <div class="modal" style="max-width:400px">
@@ -1871,7 +1821,6 @@ var DEPT_TASKS = {
 var currentUser  = null;
 var currentIdToken = null;
 var myTasks      = [];
-var activeTaskDate = null;
 var weekLogsCache  = {};
 var currentWeekStart = getWeekStart(new Date());
 
@@ -1937,7 +1886,8 @@ function localApi(action, p) {
   if (action === 'submitLog') {
     var idx = logs.findIndex(function(l){ return l.name===p.name && l.date===p.date; });
     var entry = { id: idx>=0?logs[idx].id:'log_'+Date.now(), name:p.name, date:p.date,
-      hours:parseFloat(p.hours), tasks:p.tasks, notes:p.notes||'', wfh:p.wfh||'office',
+      hours:parseFloat(p.hours), tasks:p.tasks, notes: (p.notes !== undefined && p.notes !== '') ? p.notes : (idx >= 0 ? (logs[idx].notes || '') : ''), wfh:p.wfh||'office',
+      dayStatus: p.dayStatus || 'present',
       status:p.status||'pending', submittedAt:new Date().toISOString() };
     if (idx>=0) logs[idx]=entry; else logs.push(entry);
     localStorage.setItem('yt_logs', JSON.stringify(logs));
@@ -2512,53 +2462,6 @@ function changeWeek(dir) {
 
 function loadMyTasks() {
   api('getMyTasks',{name:currentUser.name}).then(function(res){ myTasks=res.tasks||[]; });
-}
-
-function openTaskModal(date) {
-  activeTaskDate=date;
-  var d=new Date(date+'T12:00:00');
-  var lbl=document.getElementById('modal-task-title');
-  if(lbl) lbl.textContent='Log Tasks — '+d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
-  var already=getChipsForDate(date).map(function(c){return c.task;});
-  var body=document.getElementById('modal-task-body');
-  if(!body) return;
-  var myProjs=(JSON.parse(localStorage.getItem('yt_projects')||'null')||[]).filter(function(p){return (p.assignedTo||[]).indexOf(currentUser.name)>-1&&p.status==='active';});
-  var html='';
-  if(myProjs.length){
-    html+='<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--brand);padding:8px 8px 4px">&#128193; Projects (timesheet)</div>';
-    myProjs.forEach(function(p){
-      var title=p.name+(p.client&&p.client!=='Internal'?' — '+p.client:'');
-      var esc=escHtml(title);
-      var chk=already.indexOf(title)>-1;
-      html+='<label class="task-check-label'+(chk?' checked':'')+'" style="border-left:2px solid var(--brand);margin-left:4px">'+
-        '<input type="checkbox" value="proj_'+p.id+'" data-title="'+esc+'"'+(chk?' checked':'')+' onchange="this.closest(\'.task-check-label\').classList.toggle(\'checked\',this.checked)">'+
-        '<div class="task-check-info"><div class="task-check-title">'+esc+'</div>'+
-        '<div class="task-check-desc">Project — log hours here</div></div></label>';
-    });
-  }
-  if(myTasks.length){
-    html+='<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);padding:8px 8px 4px;border-top:1px solid var(--border);margin-top:6px">Day-to-Day Tasks</div>';
-    myTasks.forEach(function(t){
-      var chk=already.indexOf(t.title)>-1;
-      var esc=escHtml(t.title);
-      html+='<label class="task-check-label'+(chk?' checked':'')+'">'+'<input type="checkbox" value="'+t.id+'" data-title="'+esc+'"'+(chk?' checked':'')+' onchange="this.closest(\'.task-check-label\').classList.toggle(\'checked\',this.checked)">'+
-        '<div class="task-check-info"><div class="task-check-title">'+esc+'</div>'+(t.description?'<div class="task-check-desc">'+escHtml(t.description)+'</div>':'')+
-        '</div></label>';
-    });
-  }
-  if(!html) html='<div class="task-none">No projects or tasks assigned yet.<br>Ask your manager.</div>';
-  body.innerHTML=html;
-  openModal('modal-task');
-}
-
-function confirmTaskSelection() {
-  var checked=document.querySelectorAll('#modal-task-body input[type=checkbox]:checked');
-  var existing=getChipsForDate(activeTaskDate);
-  var hoursMap={};
-  existing.forEach(function(t){ hoursMap[t.task]=t.hours; });
-  var selected=Array.from(checked).map(function(cb){ return {task:cb.dataset.title, hours:hoursMap[cb.dataset.title]||0}; });
-  renderChips(activeTaskDate,selected,false);
-  closeModal('modal-task');
 }
 
 function collectTsEntries() {
