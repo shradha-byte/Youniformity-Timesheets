@@ -3645,7 +3645,7 @@ function renderTimesheetGrid() {
   if (lbl) lbl.textContent = 'Week of '+fmt(ws)+' – '+fmt(we)+', '+we.getFullYear();
 
   var nextBtn = document.getElementById('btn-next-week');
-  if (nextBtn) { nextBtn.disabled = wsStr >= thisWS; nextBtn.style.opacity = wsStr >= thisWS ? '.35' : '1'; }
+  if (nextBtn) { nextBtn.disabled = ws >= thisWS; nextBtn.style.opacity = ws >= thisWS ? '.35' : '1'; }
 
   // Mon–Fri dates
   var days = [];
