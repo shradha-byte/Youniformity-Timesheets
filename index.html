@@ -3322,43 +3322,131 @@ function buildMiniCal(year,month) {
   return cal;
 }
 
-//  PROFILE 
+// ── PROFILE ───────────────────────────────────────────────────
+
+function loadProfileData() {
+  var raw = localStorage.getItem('yt_profile_'+currentUser.name);
+  if (!raw) return {};
+  try { return JSON.parse(raw); } catch(e) { return {}; }
+}
+
+function saveProfileData(updates) {
+  var existing = loadProfileData();
+  Object.keys(updates).forEach(function(k){ existing[k] = updates[k]; });
+  localStorage.setItem('yt_profile_'+currentUser.name, JSON.stringify(existing));
+}
+
 function loadProfile() {
-  var months=[];
-  var now=new Date();
-  for(var i=0;i<3;i++){
-    var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+  var profData = loadProfileData();
+
+  // Sidebar: avatar / photo
+  var inits   = currentUser.name.split(' ').map(function(w){ return w[0]||''; }).join('').slice(0,2).toUpperCase();
+  var avEl    = document.getElementById('prof-av');
+  var photoEl = document.getElementById('prof-photo-img');
+  if (avEl) avEl.textContent = inits;
+  if (profData.photo && photoEl) {
+    photoEl.src = profData.photo; photoEl.style.display = 'block';
+    if (avEl) avEl.style.display = 'none';
+  } else {
+    if (photoEl) photoEl.style.display = 'none';
+    if (avEl)    avEl.style.display    = '';
+  }
+
+  var el;
+  el = document.getElementById('prof-name'); if (el) el.textContent = currentUser.name;
+  el = document.getElementById('prof-dept'); if (el) el.textContent = currentUser.dept || '';
+  el = document.getElementById('prof-type');
+  if (el) el.textContent = ({admin:'Admin',manager:'Manager',employee:'Employee',intern:'Intern'}[currentUser.role] || currentUser.type || 'Employee');
+
+  // Load stats + heatmap (reuses existing helpers below)
+  loadProfileStats();
+
+  // Render the active tab
+  switchProfTab(activeProfTab);
+}
+
+function onProfPhotoChange(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) { toast('Photo too large — max 2 MB','error'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    saveProfileData({photo: e.target.result});
+    var photoEl = document.getElementById('prof-photo-img');
+    var avEl    = document.getElementById('prof-av');
+    if (photoEl) { photoEl.src = e.target.result; photoEl.style.display = 'block'; }
+    if (avEl)    avEl.style.display = 'none';
+    toast('Profile photo updated','success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadProfileStats() {
+  var months = [], now = new Date();
+  for (var i = 0; i < 3; i++) {
+    var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     months.push(d.toISOString().slice(0,7));
   }
-  Promise.all(months.map(function(m){ return api('getMyLogs',{name:currentUser.name,month:m}); })).then(function(results){
-    var allLogs=[];
-    results.forEach(function(r){ allLogs=allLogs.concat(r.logs||[]); });
-    var totalH=allLogs.reduce(function(s,l){return s+(parseFloat(l.hours)||0);},0);
-    var wfhDays=allLogs.filter(function(l){return l.wfh==='wfh';}).length;
-    var approved=allLogs.filter(function(l){return l.status==='approved';}).length;
-    var streak=0; var day=new Date(); var td=now.toISOString().slice(0,10);
-    while(true){
-      var ds=day.toISOString().slice(0,10); var dow=day.getDay();
-      if(dow===0||dow===6||HOLIDAYS[ds]){day.setDate(day.getDate()-1);continue;}
-      if(allLogs.find(function(l){return l.date===ds;})){ streak++; day.setDate(day.getDate()-1); } else break;
+  Promise.all(months.map(function(m){ return api('getMyLogs',{name:currentUser.name,month:m}); })).then(function(results) {
+    var allLogs = [];
+    results.forEach(function(r){ allLogs = allLogs.concat(r.logs||[]); });
+    var totalH   = allLogs.reduce(function(s,l){ return s+(parseFloat(l.hours)||0); },0);
+    var wfhDays  = allLogs.filter(function(l){ return l.wfh==='wfh'; }).length;
+    var approved = allLogs.filter(function(l){ return l.status==='approved'; }).length;
+    var streak   = 0, day = new Date();
+    while (true) {
+      var ds = day.toISOString().slice(0,10), dow = day.getDay();
+      if (dow===0||dow===6||HOLIDAYS[ds]) { day.setDate(day.getDate()-1); continue; }
+      if (allLogs.find(function(l){ return l.date===ds; })) { streak++; day.setDate(day.getDate()-1); } else break;
     }
-    var avgHrs=allLogs.length?totalH/allLogs.length:0;
-    var ps=document.getElementById('profile-stats');
-    if(ps) ps.innerHTML=[
-      ['Total Hours (3mo)',totalH.toFixed(1)+'h'],
-      ['Days Logged',allLogs.length+' days'],
-      ['Approved Logs',approved],
-      ['WFH Days',wfhDays],
-      ['Avg Hours/Day',avgHrs.toFixed(1)+'h'],
-      ['Current Streak',streak+' days'],
-      ['Employee Type',currentUser.type||'Full-time'],
-      ['Department',currentUser.dept||'&mdash;']
+    var avgHrs = allLogs.length ? totalH/allLogs.length : 0;
+    var ps = document.getElementById('profile-stats');
+    if (ps) ps.innerHTML = [
+      ['Total Hours (3mo)', totalH.toFixed(1)+'h'],
+      ['Days Logged',       allLogs.length+' days'],
+      ['Approved Logs',     approved],
+      ['WFH Days',          wfhDays],
+      ['Avg Hours/Day',     avgHrs.toFixed(1)+'h'],
+      ['Current Streak',    streak+' days'],
+      ['Employee Type',     currentUser.type||'Full-time'],
+      ['Department',        currentUser.dept||'—']
     ].map(function(r){
       return '<div class="profile-stat-row"><span class="ps-label">'+r[0]+'</span><span class="ps-val">'+r[1]+'</span></div>';
     }).join('');
     buildHeatmap(allLogs);
     buildMonthlySummary(results, months);
   });
+}
+
+var activeProfTab = 'personal';
+
+function switchProfTab(tabName, btn) {
+  activeProfTab = tabName;
+  document.querySelectorAll('.prof-tab-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  var content  = document.getElementById('prof-tab-content');
+  if (!content) return;
+  var profData = loadProfileData();
+  var html = '';
+  if      (tabName==='personal')  html = renderPersonalTab(profData, false);
+  else if (tabName==='work')      html = renderWorkTab(profData, false);
+  else if (tabName==='bank')      html = renderBankTab(profData, false);
+  else if (tabName==='education') html = renderEducationTab(profData, false);
+  else if (tabName==='documents') html = renderDocumentsTab(profData);
+  content.innerHTML = '<div class="prof-tab-content-inner">'+html+'</div>';
+}
+
+function enterProfEditMode(tab) {
+  var content  = document.getElementById('prof-tab-content');
+  if (!content) return;
+  var profData = loadProfileData();
+  var html = '';
+  if      (tab==='personal')  html = renderPersonalTab(profData, true);
+  else if (tab==='work')      html = renderWorkTab(profData, true);
+  else if (tab==='bank')      html = renderBankTab(profData, true);
+  else if (tab==='education') html = renderEducationTab(profData, true);
+  content.innerHTML = '<div class="prof-tab-content-inner">'+html+'</div>';
 }
 
 function buildHeatmap(logs) {
