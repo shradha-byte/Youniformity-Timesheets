@@ -2315,7 +2315,7 @@ function showApp() {
   el=document.getElementById('prof-av');   if(el) el.textContent=inits;
   el=document.getElementById('prof-name'); if(el) el.textContent=currentUser.name;
   el=document.getElementById('prof-dept'); if(el) el.textContent=currentUser.dept||'';
-  el=document.getElementById('prof-type'); if(el) el.textContent=currentUser.type||'Full-time';
+  el=document.getElementById('prof-type'); if(el) el.textContent=({admin:'Admin',manager:'Manager',employee:'Employee',intern:'Intern'}[currentUser.role] || currentUser.type || 'Employee');
   if (currentUser.dept) ensureUserTasks(currentUser.name, currentUser.dept);
   updateRoleNav();
   setupBanner();
@@ -3417,6 +3417,13 @@ function loadProfileStats() {
     buildMonthlySummary(results, months);
   });
 }
+
+// Tab renderers — replaced by Tasks 8–12
+function renderPersonalTab(d, edit)  { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
+function renderWorkTab(d, edit)      { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
+function renderBankTab(d, edit)      { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
+function renderEducationTab(d, edit) { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
+function renderDocumentsTab(d)       { return '<p style="padding:16px;color:var(--text-muted)">Loading&hellip;</p>'; }
 
 var activeProfTab = 'personal';
 
