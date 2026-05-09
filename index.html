@@ -3786,7 +3786,8 @@ function onTsStatusChange(sel) {
   document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]').forEach(function(inp) {
     inp.disabled = disabled;
     if (disabled) inp.value = '';
-    inp.closest('td').className = 'ts-hours-cell'+(disabled ? ' ts-cell-disabled' : '');
+    var td = inp.closest('td');
+    td.classList.toggle('ts-cell-disabled', disabled);
   });
   // Update row totals
   document.querySelectorAll('.ts-proj-row').forEach(function(tr) {
@@ -3841,6 +3842,7 @@ function addTsProjectRow() {
   if (!pn || !pn.trim()) return;
   pn = pn.trim();
 
+  if (inGrid.indexOf(pn) > -1) { toast('That project is already in the grid', 'error'); return; }
   var tbody = document.getElementById('ts-tbody');
   if (tbody) {
     tbody.insertAdjacentHTML('beforeend', buildTsProjectRow(pn, days, {}, savedSts));
