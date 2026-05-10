@@ -3801,15 +3801,22 @@ function buildMonthlySummary(results,months) {
 
 // ── TIMESHEET GRID ────────────────────────────────────────────
 
+// Local-timezone date formatter — avoids UTC midnight rollback in UTC+ zones
+function dFmt(d) {
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+
 function tsLoadState() {
-  var ws = new Date(currentWeekStart).toISOString().slice(0,10);
-  var raw = localStorage.getItem('yt_ts_'+currentUser.name+'_'+ws);
+  var ws = dFmt(new Date(currentWeekStart));
+  // also try old UTC key for backward compat
+  var raw = localStorage.getItem('yt_ts_'+currentUser.name+'_'+ws)
+         || localStorage.getItem('yt_ts_'+currentUser.name+'_'+new Date(currentWeekStart).toISOString().slice(0,10));
   if (!raw) return {rows:{}, statuses:{}};
   try { return JSON.parse(raw); } catch(e) { return {rows:{}, statuses:{}}; }
 }
 
 function tsSaveState() {
-  var ws = new Date(currentWeekStart).toISOString().slice(0,10);
+  var ws = dFmt(new Date(currentWeekStart));
   var rows = {};
   document.querySelectorAll('.ts-proj-row').forEach(function(tr) {
     var pn = tr.dataset.proj;
@@ -3829,8 +3836,8 @@ function tsSaveState() {
 
 function renderTimesheetGrid() {
   var ws     = new Date(currentWeekStart);
-  var wsStr  = ws.toISOString().slice(0,10);
-  var today  = new Date().toISOString().slice(0,10);
+  var wsStr  = dFmt(ws);
+  var today  = dFmt(new Date());
   var thisWS = getWeekStart(new Date());
 
   // Week label
@@ -3866,11 +3873,10 @@ function renderTimesheetGrid() {
     var fromStr = l.from && l.from !== 'na' ? l.from : null;
     var toStr   = l.to   && l.to   !== 'na' ? l.to   : fromStr;
     if (!fromStr) return;
-    // Use T00:00:00 (midnight local) so dates produce the same UTC ISO key as the days array
     var cur = new Date(fromStr+'T00:00:00'), end = new Date(toStr+'T00:00:00');
     if (isNaN(cur.getTime())) return;
     if (isNaN(end.getTime())) end = cur;
-    while (cur <= end) { leaveDates[cur.toISOString().slice(0,10)] = true; cur.setDate(cur.getDate()+1); }
+    while (cur <= end) { leaveDates[dFmt(cur)] = true; cur.setDate(cur.getDate()+1); }
   });
 
   // Build project name list: assigned + any extra in saved state
@@ -3883,7 +3889,7 @@ function renderTimesheetGrid() {
   // ── HEAD ROW ──
   var thead = '<thead><tr class="ts-head-row"><th class="ts-col-proj">Project</th>';
   days.forEach(function(d) {
-    var ds = d.toISOString().slice(0,10);
+    var ds = dFmt(d);
     thead += '<th class="ts-col-day'+(ds===today?' ts-today':'')+'" data-date="'+ds+'">'
       +DSHORT[d.getDay()]+'<span class="ts-day-num">'+d.getDate()+' '+d.toLocaleString('default',{month:'short'})+'</span></th>';
   });
@@ -3892,7 +3898,7 @@ function renderTimesheetGrid() {
   // ── STATUS ROW ──
   thead += '<tr class="ts-status-row"><td class="ts-status-label">Status</td>';
   days.forEach(function(d) {
-    var ds   = d.toISOString().slice(0,10);
+    var ds   = dFmt(d);
     var isHol = !!HOLIDAYS[ds];
     var def   = isHol ? 'holiday' : 'present';
     var saved = savedSts[ds] !== undefined ? savedSts[ds] : def;
@@ -3933,7 +3939,7 @@ function buildTsProjectRow(pn, days, savedHours, savedSts) {
   var rowTotal = 0;
   var cells = '';
   days.forEach(function(d) {
-    var ds       = d.toISOString().slice(0,10);
+    var ds       = dFmt(d);
     var st       = savedSts[ds] || (HOLIDAYS[ds] ? 'holiday' : 'present');
     var disabled = st === 'leave' || st === 'holiday';
     var hours    = savedHours[ds] || 0;
