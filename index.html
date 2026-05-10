@@ -3944,7 +3944,7 @@ function renderTimesheetGrid() {
     +'<button class="ts-add-proj-btn" onclick="addTsProjectRow()">+ Add Project</button></td></tr>'
     +'<tr class="ts-totals-row"><td class="ts-totals-label">Daily Total</td>';
   days.forEach(function(d) {
-    tfoot += '<td class="ts-day-total" id="ts-dt-'+d.toISOString().slice(0,10)+'">—</td>';
+    tfoot += '<td class="ts-day-total" id="ts-dt-'+dFmt(d)+'">—</td>';
   });
   tfoot += '<td class="ts-week-total-cell" id="ts-week-total">—</td></tr></tfoot>';
 
