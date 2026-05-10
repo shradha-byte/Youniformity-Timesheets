@@ -3500,42 +3500,51 @@ function savePersonalTab() {
 
 // ── Task 9: Work Info Tab ──
 function renderWorkTab(profData, editMode) {
-  var w        = profData.work || {};
-  var isAdmin  = currentUser.role === 'admin';
-  var empIdx   = DEMO_USERS.findIndex(function(u){ return u.name === currentUser.name; });
-  var empId    = 'YU-'+String(empIdx+1).padStart(3,'0');
+  var w       = profData.work || {};
+  var isAdmin = currentUser.role === 'admin';
+  var empIdx  = DEMO_USERS.findIndex(function(u){ return u.name === currentUser.name; });
+  var empId   = 'YU-'+String(empIdx+1).padStart(3,'0');
+  var desig   = w.designation || '';
+  var locVal  = w.workLocation || 'WFH';
 
-  var readOnly = [
-    {label:'Employee ID',   value:empId},
-    {label:'Department',    value:currentUser.dept||'—'},
-    {label:'Designation',   value:currentUser.designation || currentUser.type||'—'},
-    {label:'Reporting To',  value:currentUser.reportsTo||'—'},
-    {label:'Employment',    value:currentUser.type||'Full-time'}
-  ];
-  var rows = readOnly.map(function(f){
-    return '<div class="prof-field-row"><span class="prof-field-label">'+f.label+'</span>'
-      +'<span class="prof-field-value">'+escHtml(f.value)+'</span></div>';
-  }).join('');
+  function ro(label, val) {
+    return '<div class="prof-field-row"><span class="prof-field-label">'+label+'</span>'
+      +'<span class="prof-field-value">'+val+'</span></div>';
+  }
+  function notSet(val) {
+    return val ? escHtml(val) : '<span style="color:var(--text-faint)">Not set</span>';
+  }
+
+  var rows = ro('Employee ID', escHtml(empId))
+    + ro('Department', escHtml(currentUser.dept||'—'));
+
+  // Designation — editable by the employee
+  if (editMode) {
+    rows += '<div class="prof-field-row"><span class="prof-field-label">Designation</span>'
+      +'<input class="prof-field-input" type="text" data-key="designation" value="'+escHtml(desig)+'" placeholder="e.g. Senior Consultant"></div>';
+  } else {
+    rows += ro('Designation', notSet(desig));
+  }
+
+  rows += ro('Reporting To', escHtml(currentUser.reportsTo||'—'))
+    + ro('Employment', escHtml(currentUser.type||'Full-time'));
 
   // Joining date — admin-editable only
   if (editMode && isAdmin) {
     rows += '<div class="prof-field-row"><span class="prof-field-label">Joining Date</span>'
       +'<input class="prof-field-input" type="date" data-key="joiningDate" value="'+(w.joiningDate||'')+'"></div>';
   } else {
-    rows += '<div class="prof-field-row"><span class="prof-field-label">Joining Date</span>'
-      +'<span class="prof-field-value">'+(w.joiningDate||'<span style="color:var(--text-faint)">Not set</span>')+'</span></div>';
+    rows += ro('Joining Date', notSet(w.joiningDate));
   }
 
   // Work location — always employee-editable
-  var locVal = w.workLocation || 'WFH';
   if (editMode) {
     rows += '<div class="prof-field-row"><span class="prof-field-label">Work Location</span>'
       +'<select class="prof-field-input" data-key="workLocation">'
       +['WFH','Office','Hybrid'].map(function(l){ return '<option value="'+l+'"'+(locVal===l?' selected':'')+'>'+l+'</option>'; }).join('')
       +'</select></div>';
   } else {
-    rows += '<div class="prof-field-row"><span class="prof-field-label">Work Location</span>'
-      +'<span class="prof-field-value">'+escHtml(locVal)+'</span></div>';
+    rows += ro('Work Location', escHtml(locVal));
   }
 
   var hd = '<div class="prof-section-hd"><span class="prof-section-title">Work Info</span>';
