@@ -241,6 +241,9 @@ body{font-family:'DM Sans','Noto Sans JP','Segoe UI',system-ui,sans-serif;backgr
 .badge-approved{background:#D1FAE5;color:#065F46}
 .badge-pending{background:#FEF3C7;color:#92400E}
 .badge-rejected{background:#FEE2E2;color:#991B1B}
+.badge-cancelled{background:#F3F4F6;color:#6B7280}
+.btn-cancel-leave{font-size:11px;font-weight:600;color:#9CA3AF;background:none;border:1px solid #E5E7EB;border-radius:5px;padding:3px 10px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+.btn-cancel-leave:hover{background:#FEE2E2;color:#991B1B;border-color:#FECACA}
 .badge-draft{background:#F3F4F6;color:#6B7280}
 /* FORMS */
 .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
@@ -2825,11 +2828,13 @@ function loadLeaves() {
       var p = LEAVE_POLICY[l.type] || {color:'#6B7280'};
       var range = l.from === l.to ? l.from : l.from + ' to ' + l.to;
       if (l.halfDay === true || l.halfDay === 'true') range = (l.halfDay_date || l.from) + ' (' + (l.session || 'half-day') + ')';
+      var canCancel = l.status === 'pending' || l.status === 'approved';
+      var cancelBtn = canCancel ? '<button class="btn-cancel-leave" onclick="cancelLeave(\''+l.id+'\')">Cancel</button>' : '';
       return '<div class="leave-item"><div style="display:flex;align-items:center;gap:10px">' +
         '<div style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>' +
         '<div><div style="font-size:13px;font-weight:700">' + escHtml(l.type) + '</div>' +
         '<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">' + range + ' &middot; ' + escHtml(l.reason) + '</div></div></div>' +
-        badgeHTML(l.status) + '</div>';
+        '<div style="display:flex;align-items:center;gap:8px">' + cancelBtn + badgeHTML(l.status) + '</div></div>';
     }).join('');
   });
 }
@@ -2922,8 +2927,23 @@ function submitLeave() {
     }
   });
 }
+
+function cancelLeave(leaveId) {
+  if (!confirm('Cancel this leave request?')) return;
+  api('updateLeave', { id: leaveId, status: 'cancelled' }).then(function(res) {
+    if (res && res.ok) {
+      toast('Leave cancelled', 'success');
+      loadLeaves();
+      computeLeaveBalance();
+      renderTimesheetGrid();
+    } else {
+      toast('Could not cancel leave', 'error');
+    }
+  });
+}
+
 // -- Ikigai ------------------------------------------------------------
-//  Wellness: Energy & Intention 
+//  Wellness: Energy & Intention
 // ============================================================
 // WELLNESS JS
 // ============================================================
@@ -3869,7 +3889,7 @@ function renderTimesheetGrid() {
   var leaveDates = {};
   var myLeaves = JSON.parse(localStorage.getItem('yt_leaves_'+currentUser.name) || '[]');
   myLeaves.forEach(function(l) {
-    if (l.status === 'rejected') return;
+    if (l.status === 'rejected' || l.status === 'cancelled') return;
     var fromStr = l.from && l.from !== 'na' ? l.from : null;
     var toStr   = l.to   && l.to   !== 'na' ? l.to   : fromStr;
     if (!fromStr) return;
@@ -4171,7 +4191,7 @@ function logFocusSession() {
 
 //  HELPERS 
 function badgeHTML(status) {
-  var map={approved:'<span class="badge badge-approved">Approved</span>',pending:'<span class="badge badge-pending">Pending</span>',rejected:'<span class="badge badge-rejected">Rejected</span>',draft:'<span class="badge badge-draft">Draft</span>'};
+  var map={approved:'<span class="badge badge-approved">Approved</span>',pending:'<span class="badge badge-pending">Pending</span>',rejected:'<span class="badge badge-rejected">Rejected</span>',cancelled:'<span class="badge badge-cancelled">Cancelled</span>',draft:'<span class="badge badge-draft">Draft</span>'};
   return map[status]||map.draft;
 }
 
