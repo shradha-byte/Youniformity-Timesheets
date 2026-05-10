@@ -499,6 +499,7 @@ textarea{resize:vertical;min-height:70px}
 .ts-status-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 6px 8px 14px!important;text-align:left;vertical-align:middle}
 .ts-status-cell{text-align:center;padding:6px!important;vertical-align:middle}
 .ts-status-sel{border:1.5px solid var(--border);border-radius:6px;padding:5px 6px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;outline:none;width:88px;transition:.15s}
+.ts-status-badge{display:inline-block;border-radius:6px;padding:5px 8px;font-size:11.5px;font-weight:700;border:1.5px solid;min-width:72px;text-align:center;box-sizing:border-box}
 .ts-st-present{background:var(--green-bg);color:var(--brand);border-color:var(--green-border)}
 .ts-st-wfh{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
 .ts-st-leave{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
@@ -846,6 +847,9 @@ textarea{resize:vertical;min-height:70px}
       <div class="card">
         <div style="overflow-x:auto">
           <table class="ts-grid" id="ts-grid"></table>
+        </div>
+        <div style="padding:10px 14px;border-top:2px dashed #B5CDB5;background:#FAFCFA">
+          <button id="ts-add-proj-btn" class="ts-add-proj-btn" onclick="addTsProjectRow()">+ Add Project</button>
         </div>
         <div class="week-footer">
           <div class="week-total-txt" id="week-total-txt">Total: <strong>0h</strong></div>
@@ -2507,6 +2511,7 @@ function loadMyTasks() {
 function collectTsEntries() {
   var statuses = {};
   document.querySelectorAll('.ts-status-sel').forEach(function(sel){ statuses[sel.dataset.date] = sel.value; });
+  document.querySelectorAll('.ts-status-badge').forEach(function(b){ statuses[b.dataset.date] = b.dataset.status; });
   var byDate = {};
   document.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(inp) {
     var date = inp.dataset.date, proj = inp.dataset.proj, hours = parseFloat(inp.value)||0;
@@ -3857,9 +3862,8 @@ function tsSaveState() {
     });
   });
   var statuses = {};
-  document.querySelectorAll('.ts-status-sel').forEach(function(sel) {
-    statuses[sel.dataset.date] = sel.value;
-  });
+  document.querySelectorAll('.ts-status-sel').forEach(function(sel) { statuses[sel.dataset.date] = sel.value; });
+  document.querySelectorAll('.ts-status-badge').forEach(function(b) { statuses[b.dataset.date] = b.dataset.status; });
   localStorage.setItem('yt_ts_'+currentUser.name+'_'+ws, JSON.stringify({rows:rows, statuses:statuses}));
 }
 
@@ -3928,16 +3932,15 @@ function renderTimesheetGrid() {
   thead += '<tr class="ts-status-row"><td class="ts-status-label">Status</td>';
   days.forEach(function(d) {
     var ds   = dFmt(d);
-    var isHol = !!HOLIDAYS[ds];
-    var def   = isHol ? 'holiday' : 'present';
-    var saved = savedSts[ds] !== undefined ? savedSts[ds] : def;
-    // Leave requests (pending/approved) always override the draft; rejected leaves reset to default
-    var st = leaveDates[ds] ? 'leave' : (saved === 'leave' ? def : saved);
-    var opts = ['present','wfh','leave','holiday'].map(function(s){
-      return '<option value="'+s+'"'+(st===s?' selected':'')+'>'+{present:'Present',wfh:'WFH',leave:'Leave',holiday:'Holiday'}[s]+'</option>';
-    }).join('');
-    thead += '<td class="ts-status-cell"><select class="ts-status-sel ts-st-'+st
-      +'" data-date="'+ds+'"'+(isHol?' disabled':'')+' onchange="onTsStatusChange(this)">'+opts+'</select></td>';
+    var isHol   = !!HOLIDAYS[ds];
+    var isLeave = !!leaveDates[ds];
+    if (isLeave || isHol) {
+      var autoSt  = isLeave ? 'leave' : 'holiday';
+      var autoLbl = isLeave ? 'Leave' : 'Holiday';
+      thead += '<td class="ts-status-cell"><span class="ts-status-badge ts-st-'+autoSt+'" data-date="'+ds+'" data-status="'+autoSt+'">'+autoLbl+'</span></td>';
+    } else {
+      thead += '<td class="ts-status-cell"><span class="ts-status-badge ts-st-wfh" data-date="'+ds+'" data-status="wfh">WFH</span></td>';
+    }
   });
   thead += '<td></td></tr></thead>';
 
@@ -3949,8 +3952,7 @@ function renderTimesheetGrid() {
   tbody += '</tbody>';
 
   // ── TFOOT ──
-  var tfoot = '<tfoot><tr class="ts-add-row"><td colspan="'+(days.length+2)+'">'
-    +'<button class="ts-add-proj-btn" onclick="addTsProjectRow()">+ Add Project</button></td></tr>'
+  var tfoot = '<tfoot>'
     +'<tr class="ts-totals-row"><td class="ts-totals-label">Daily Total</td>';
   days.forEach(function(d) {
     tfoot += '<td class="ts-day-total" id="ts-dt-'+dFmt(d)+'">—</td>';
@@ -3995,26 +3997,29 @@ function updateTsProgress() {
   var target = 45;
   var total  = 0;
 
+  // Auto-status days (leave / holiday badges)
+  document.querySelectorAll('.ts-status-badge').forEach(function(badge) {
+    var ds = badge.dataset.date;
+    var st = badge.dataset.status;
+    var el = document.getElementById('ts-dt-'+ds);
+    if (el) {
+      el.innerHTML = '8h&nbsp;<span style="font-size:10px;font-weight:600;opacity:.75">'+(st==='leave'?'Leave':'Holiday')+'</span>';
+      el.className = 'ts-day-total '+(st === 'leave' ? 'ts-dt-leave' : 'ts-dt-holiday');
+    }
+    total += 8;
+  });
+  // Manual-status days (present / wfh selects)
   document.querySelectorAll('.ts-status-sel').forEach(function(sel) {
     var ds  = sel.dataset.date;
     var st  = sel.value;
     var sum = 0;
     var el  = document.getElementById('ts-dt-'+ds);
-
-    if (st === 'leave' || st === 'holiday') {
-      sum = 8;
-      if (el) {
-        el.innerHTML = '8h&nbsp;<span style="font-size:10px;font-weight:600;opacity:.75">'+(st==='leave'?'Leave':'Holiday')+'</span>';
-        el.className = 'ts-day-total '+(st === 'leave' ? 'ts-dt-leave' : 'ts-dt-holiday');
-      }
-    } else {
-      document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]:not(:disabled)').forEach(function(inp){
-        sum += parseFloat(inp.value) || 0;
-      });
-      if (el) {
-        el.textContent = sum > 0 ? sum.toFixed(1)+'h' : '—';
-        el.className = 'ts-day-total'+(sum >= 7.5 ? ' ts-dt-green' : sum > 0 ? ' ts-dt-amber' : '');
-      }
+    document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]:not(:disabled)').forEach(function(inp){
+      sum += parseFloat(inp.value) || 0;
+    });
+    if (el) {
+      el.textContent = sum > 0 ? sum.toFixed(1)+'h' : '—';
+      el.className = 'ts-day-total'+(sum >= 7.5 ? ' ts-dt-green' : sum > 0 ? ' ts-dt-amber' : '');
     }
     total += sum;
   });
@@ -4078,6 +4083,7 @@ function addTsProjectRow() {
   });
   var savedSts = {};
   document.querySelectorAll('.ts-status-sel').forEach(function(sel){ savedSts[sel.dataset.date] = sel.value; });
+  document.querySelectorAll('.ts-status-badge').forEach(function(b){ savedSts[b.dataset.date] = b.dataset.status; });
 
   var inGrid = [];
   document.querySelectorAll('.ts-proj-row').forEach(function(tr){ if (tr.dataset.proj) inGrid.push(tr.dataset.proj); });
@@ -4110,7 +4116,7 @@ function addTsProjectRow() {
   }
 
   // Position below the Add Project button
-  var addBtn = document.querySelector('.ts-add-proj-btn');
+  var addBtn = document.getElementById('ts-add-proj-btn');
   if (addBtn) {
     var rect = addBtn.getBoundingClientRect();
     picker.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
@@ -4121,7 +4127,7 @@ function addTsProjectRow() {
 
   setTimeout(function() {
     document.addEventListener('click', function closePicker(e) {
-      if (!picker.contains(e.target) && !addBtn.contains(e.target)) {
+      if (!picker.contains(e.target) && (!addBtn || !addBtn.contains(e.target))) {
         picker.remove();
         document.removeEventListener('click', closePicker);
       }
