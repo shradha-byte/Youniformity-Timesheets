@@ -3481,7 +3481,7 @@ function renderWorkTab(profData, editMode) {
   var readOnly = [
     {label:'Employee ID',   value:empId},
     {label:'Department',    value:currentUser.dept||'—'},
-    {label:'Designation',   value:currentUser.type||'—'},
+    {label:'Designation',   value:currentUser.designation || currentUser.type||'—'},
     {label:'Reporting To',  value:currentUser.reportsTo||'—'},
     {label:'Employment',    value:currentUser.type||'Full-time'}
   ];
@@ -3525,6 +3525,10 @@ function renderWorkTab(profData, editMode) {
 function saveWorkTab() {
   var data = {};
   document.querySelectorAll('#prof-tab-content [data-key]').forEach(function(el){ data[el.dataset.key] = el.value; });
+  var existing = loadProfileData();
+  if (!data.joiningDate && existing.work && existing.work.joiningDate) {
+    data.joiningDate = existing.work.joiningDate;
+  }
   saveProfileData({work: data});
   toast('Work info saved','success');
   switchProfTab('work');
@@ -3635,7 +3639,8 @@ function addEduEntry() {
 }
 
 function removeEduEntry(btn) {
-  var idx      = parseInt(btn.closest('.edu-entry').dataset.idx);
+  var idx      = parseInt(btn.closest('.edu-entry').dataset.idx, 10);
+  if (isNaN(idx)) return;
   var profData = loadProfileData();
   var edu      = profData.education || [];
   edu.splice(idx, 1);
@@ -3676,7 +3681,7 @@ function renderDocumentsTab(profData) {
       +(doc
         ? '<span class="doc-slot-status uploaded">'+escHtml(doc.name)+'</span>'
           +'<div class="doc-actions">'
-          +'<a class="btn btn-outline btn-sm" href="'+doc.data+'" target="_blank" rel="noopener">View</a>'
+          +'<a class="btn btn-outline btn-sm" href="'+escHtml(doc.data)+'" target="_blank" rel="noopener">View</a>'
           +'<button class="btn btn-danger btn-sm" onclick="removeDoc(\''+s.key+'\')">Remove</button>'
           +'</div>'
         : '<span class="doc-slot-status">Not uploaded</span>'
@@ -3704,6 +3709,7 @@ function uploadDoc(input, key) {
     toast(file.name+' uploaded','success');
     switchProfTab('documents');
   };
+  reader.onerror = function() { toast('Could not read file — try again','error'); };
   reader.readAsDataURL(file);
 }
 
