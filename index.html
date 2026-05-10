@@ -1840,9 +1840,9 @@ var DEMO_USERS = [
   {name:'Shradha Prakash', email:'shradha@youniformity.co.in',     dept:'Consulting & Delivery',type:'Full-time',role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
   {name:'Runjhun Bhatia',  email:'runjhun@youniformity.co.in',     dept:'Marketing & Brand',   type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
   {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'male'},
-  {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Anhad Seth',     gender:'female'},
-  {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Anhad Seth',     gender:'female'},
-  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Anhad Seth',     gender:'male'}
+  {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
+  {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
+  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia',  gender:'male'}
 ];
 
 var DEMO_PROJECTS = [];
@@ -4279,14 +4279,18 @@ function renderOverviewKanban(projs) {
       +'</div>'+cards+'</div>';
   }).join('');
 }
+// People who can access the Management section and self-assign projects
+var PROJECT_MANAGERS = ['Mamta Kumar','Manoj Kumar','Achraj Prakash','Aarsh Bhatia','Runjhun Bhatia','Shradha Prakash'];
+
 // ========== ROLE-BASED NAV ==========
 function updateRoleNav() {
   var role = currentUser ? currentUser.role : 'employee';
   var isManager = (role === 'manager' || role === 'admin');
   var isAdmin   = (role === 'admin');
+  var canManage = currentUser && PROJECT_MANAGERS.indexOf(currentUser.name) > -1;
   var mgrSec   = document.getElementById('mgr-section');
   var adminSec = document.getElementById('admin-section');
-  if (mgrSec)   mgrSec.style.display   = isManager ? '' : 'none';
+  if (mgrSec)   mgrSec.style.display   = canManage ? '' : 'none';
   if (adminSec) adminSec.style.display  = isAdmin   ? '' : 'none';
   var newProjBtn = document.getElementById('btn-new-project-self');
   if (newProjBtn) newProjBtn.style.display = (role !== 'intern') ? '' : 'none';
