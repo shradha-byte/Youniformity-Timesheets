@@ -482,43 +482,52 @@ textarea{resize:vertical;min-height:70px}
 .pin-key:hover{border-color:var(--brand);background:var(--green-bg)}
 
 /* ── TIMESHEET GRID ── */
-.ts-grid{width:100%;border-collapse:collapse;font-size:12.5px}
-.ts-grid th,.ts-grid td{border:1px solid var(--border);padding:0}
-.ts-col-proj{width:180px;min-width:150px;text-align:left}
-.ts-col-day{min-width:90px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--green-bg2);padding:8px 6px}
+.ts-grid{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto}
+.ts-grid th,.ts-grid td{border:1px solid var(--border);padding:0;vertical-align:middle}
+.ts-col-proj{width:210px;min-width:180px;text-align:left}
+.ts-head-row .ts-col-proj{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
+.ts-col-day{min-width:96px;text-align:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--green-bg2);padding:10px 8px;line-height:1.3}
 .ts-col-day.ts-today{background:var(--green-bg);color:var(--brand)}
-.ts-day-num{font-weight:400;text-transform:none;letter-spacing:0;display:block;margin-top:2px;color:var(--text-muted)}
-.ts-col-total{width:72px;min-width:72px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--green-bg2);padding:8px 6px}
+.ts-day-num{font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;display:block;margin-top:3px;color:var(--text-muted)}
+.ts-col-day.ts-today .ts-day-num{color:var(--brand-mid)}
+.ts-col-total{width:76px;min-width:76px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--green-bg2);padding:10px 6px}
 .ts-head-row th{background:var(--green-bg2)}
-.ts-status-row td{padding:5px 6px;background:#FAFCFF}
-.ts-status-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;padding:6px 12px!important;text-align:left}
-.ts-status-cell{text-align:center}
-.ts-status-sel{border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;outline:none;width:100%;max-width:90px;transition:.15s}
+.ts-status-row td{padding:6px 6px;background:#FAFCFF;border-top:2px solid var(--green-border)}
+.ts-status-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;padding:6px 14px!important;text-align:left}
+.ts-status-cell{text-align:center;padding:6px 6px!important}
+.ts-status-sel{border:1.5px solid var(--border);border-radius:6px;padding:5px 6px;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;outline:none;width:88px;transition:.15s}
 .ts-st-present{background:var(--green-bg);color:var(--brand);border-color:var(--green-border)}
 .ts-st-wfh{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
 .ts-st-leave{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
 .ts-st-holiday{background:var(--gold-bg);color:var(--gold-txt);border-color:#FCD34D}
 .ts-proj-row td{vertical-align:middle}
-.ts-proj-name-cell{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px}
-.ts-proj-nm{font-size:12.5px;font-weight:600;color:var(--text-dark);flex:1;line-height:1.3}
-.ts-remove-btn{background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:15px;padding:0 2px;line-height:1;flex-shrink:0;transition:.1s}
+.ts-proj-name-cell{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px}
+.ts-proj-nm{font-size:13px;font-weight:600;color:var(--text-dark);flex:1;line-height:1.3}
+.ts-remove-btn{background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;transition:.1s}
 .ts-remove-btn:hover{color:var(--red)}
-.ts-hours-cell{text-align:center;padding:4px 5px}
-.ts-hours-cell.ts-cell-disabled{background:#F9F9F9}
-.ts-hours-inp{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-dark);background:#fff;outline:none;text-align:center;transition:.15s}
-.ts-hours-inp:focus{border-color:var(--brand)}
+.ts-hours-cell{text-align:center;padding:5px 6px}
+.ts-hours-cell.ts-cell-disabled{background:#F5F5F5}
+.ts-hours-inp{width:74px;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-dark);background:#fff;outline:none;text-align:center;transition:.15s}
+.ts-hours-inp:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(26,92,46,.08)}
 .ts-hours-inp:disabled{background:#F3F4F6;color:#C4C9D4;cursor:not-allowed;border-color:var(--border)}
 .ts-hours-inp::-webkit-inner-spin-button,.ts-hours-inp::-webkit-outer-spin-button{opacity:0}
-.ts-row-total{text-align:center;font-size:12px;font-weight:700;color:var(--brand);padding:6px 8px;background:var(--green-bg2)}
-.ts-add-row td{padding:10px 12px;border-top:2px dashed var(--green-border)}
-.ts-add-proj-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--brand);background:none;border:1px dashed var(--green-border);border-radius:5px;padding:4px 10px;cursor:pointer;font-family:inherit;transition:.15s}
+.ts-row-total{text-align:center;font-size:12.5px;font-weight:700;color:var(--brand);padding:6px 8px;background:var(--green-bg2)}
+.ts-add-row td{padding:12px 14px;border-top:2px dashed var(--green-border)}
+.ts-add-proj-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--brand);background:var(--green-bg2);border:1.5px dashed var(--green-border);border-radius:7px;padding:6px 14px;cursor:pointer;font-family:inherit;transition:.15s}
 .ts-add-proj-btn:hover{background:var(--green-bg);border-color:var(--brand)}
-.ts-totals-row td{background:var(--green-bg2);padding:7px 8px;font-weight:700}
-.ts-totals-label{font-size:11.5px;font-weight:700;color:var(--text-dark);padding-left:12px!important}
+.ts-totals-row td{background:var(--green-bg2);padding:8px 6px;font-weight:700;border-top:2px solid var(--green-border)}
+.ts-totals-label{font-size:11.5px;font-weight:700;color:var(--text-dark);padding-left:14px!important}
 .ts-day-total{text-align:center;font-size:12.5px;color:var(--text-dark)}
-.ts-dt-green{color:var(--brand)}
-.ts-dt-amber{color:var(--amber)}
+.ts-dt-green{color:var(--brand);font-weight:700}
+.ts-dt-amber{color:var(--amber);font-weight:700}
+.ts-dt-leave{color:var(--amber);font-weight:700}
+.ts-dt-holiday{color:var(--gold-txt);font-weight:700}
 .ts-week-total-cell{text-align:center;font-size:13px;font-weight:800;color:var(--brand)}
+/* project picker dropdown */
+.ts-proj-picker{position:fixed;z-index:1001;background:#fff;border:1.5px solid var(--green-border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.13);padding:6px 0;min-width:220px;max-height:260px;overflow-y:auto}
+.ts-proj-picker-item{display:block;width:100%;text-align:left;padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dark);cursor:pointer;transition:.1s}
+.ts-proj-picker-item:hover{background:var(--green-bg);color:var(--brand)}
+.ts-proj-picker-empty{padding:14px 16px;font-size:12.5px;color:var(--text-muted);font-style:italic}
 
 /* ── PROFILE TABS ── */
 .prof-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
@@ -1828,12 +1837,12 @@ var DEMO_USERS = [
   {name:'Manoj Kumar',     email:'manoj@youniformity.co.in',       dept:'Leadership',          type:'Full-time', role:'admin',    reportsTo:'Mamta Kumar',    gender:'male'},
   {name:'Achraj Prakash',  email:'operations@youniformity.co.in',  dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
   {name:'Aarsh Bhatia',    email:'aarsh@youniformity.co.in',       dept:'Client Success',      type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
-  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
   {name:'Shradha Prakash', email:'shradha@youniformity.co.in',     dept:'Consulting & Delivery',type:'Full-time',role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
   {name:'Runjhun Bhatia',  email:'runjhun@youniformity.co.in',     dept:'Marketing & Brand',   type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
-  {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash',gender:'female'},
-  {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Shradha Prakash',gender:'female'},
-  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia', gender:'male'}
+  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'male'},
+  {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Anhad Seth',     gender:'female'},
+  {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Anhad Seth',     gender:'female'},
+  {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Anhad Seth',     gender:'male'}
 ];
 
 var DEMO_PROJECTS = [];
@@ -3931,35 +3940,42 @@ function buildTsProjectRow(pn, days, savedHours, savedSts) {
 }
 
 function updateTsProgress() {
-  // Daily totals
+  var target = 45;
+  var total  = 0;
+
   document.querySelectorAll('.ts-status-sel').forEach(function(sel) {
     var ds  = sel.dataset.date;
+    var st  = sel.value;
     var sum = 0;
-    document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]:not(:disabled)').forEach(function(inp){
-      sum += parseFloat(inp.value) || 0;
-    });
-    var el = document.getElementById('ts-dt-'+ds);
-    if (el) {
-      el.textContent = sum > 0 ? sum.toFixed(1)+'h' : '—';
-      el.className = 'ts-day-total'+(sum >= 7.5 && sum <= 9 ? ' ts-dt-green' : sum > 0 && sum < 6 ? ' ts-dt-amber' : '');
+    var el  = document.getElementById('ts-dt-'+ds);
+
+    if (st === 'leave' || st === 'holiday') {
+      sum = 8;
+      if (el) {
+        el.innerHTML = '8h&nbsp;<span style="font-size:10px;font-weight:600;opacity:.75">'+(st==='leave'?'Leave':'Holiday')+'</span>';
+        el.className = 'ts-day-total '+(st === 'leave' ? 'ts-dt-leave' : 'ts-dt-holiday');
+      }
+    } else {
+      document.querySelectorAll('.ts-hours-inp[data-date="'+ds+'"]:not(:disabled)').forEach(function(inp){
+        sum += parseFloat(inp.value) || 0;
+      });
+      if (el) {
+        el.textContent = sum > 0 ? sum.toFixed(1)+'h' : '—';
+        el.className = 'ts-day-total'+(sum >= 7.5 ? ' ts-dt-green' : sum > 0 ? ' ts-dt-amber' : '');
+      }
     }
+    total += sum;
   });
 
-  // Week total
-  var total = 0;
-  document.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(inp){
-    total += parseFloat(inp.value) || 0;
-  });
-  var target = 45;
-  var pct    = Math.min(100, (total/target)*100);
-  var fill   = document.getElementById('week-progress-fill');
-  if (fill) { fill.style.width = pct+'%'; fill.className = 'week-progress-fill'+(total > target ? ' over' : ''); }
-  var plbl   = document.getElementById('week-progress-label');
-  if (plbl)  plbl.textContent = total.toFixed(1)+'h / '+target+'h';
-  var tot    = document.getElementById('week-total-txt');
-  if (tot)   tot.innerHTML = 'Total: <strong>'+total.toFixed(1)+'h</strong>';
-  var wkTot  = document.getElementById('ts-week-total');
-  if (wkTot) wkTot.textContent = total > 0 ? total.toFixed(1)+'h' : '—';
+  var pct   = Math.min(100, (total/target)*100);
+  var fill  = document.getElementById('week-progress-fill');
+  if (fill)  { fill.style.width = pct+'%'; fill.className = 'week-progress-fill'+(total > target ? ' over' : ''); }
+  var plbl  = document.getElementById('week-progress-label');
+  if (plbl)   plbl.textContent = total.toFixed(1)+'h / '+target+'h';
+  var tot   = document.getElementById('week-total-txt');
+  if (tot)    tot.innerHTML = 'Total: <strong>'+total.toFixed(1)+'h</strong>';
+  var wkTot = document.getElementById('ts-week-total');
+  if (wkTot)  wkTot.textContent = total > 0 ? total.toFixed(1)+'h' : '—';
 }
 
 function onTsStatusChange(sel) {
@@ -4000,6 +4016,10 @@ function onTsHoursChange(inp) {
 }
 
 function addTsProjectRow() {
+  // Close any existing picker
+  var existing = document.getElementById('ts-proj-picker');
+  if (existing) { existing.remove(); return; }
+
   var days = [];
   document.querySelectorAll('.ts-head-row .ts-col-day').forEach(function(th){
     days.push(new Date(th.dataset.date+'T12:00:00'));
@@ -4007,33 +4027,54 @@ function addTsProjectRow() {
   var savedSts = {};
   document.querySelectorAll('.ts-status-sel').forEach(function(sel){ savedSts[sel.dataset.date] = sel.value; });
 
-  // Projects already in grid
   var inGrid = [];
   document.querySelectorAll('.ts-proj-row').forEach(function(tr){ if (tr.dataset.proj) inGrid.push(tr.dataset.proj); });
 
-  // Assigned projects not yet added
   var available = (JSON.parse(localStorage.getItem('yt_projects')||'null')||[])
     .filter(function(p){ return (p.assignedTo||[]).indexOf(currentUser.name) > -1 && p.status === 'active' && inGrid.indexOf(p.name) < 0; });
 
-  var pn;
-  if (available.length) {
-    var opts = available.map(function(p,i){ return (i+1)+'. '+p.name; }).join('\n');
-    var choice = window.prompt('Add project — enter number or type a name:\n\n'+opts, '1');
-    if (!choice) return;
-    var idx = parseInt(choice.trim()) - 1;
-    pn = (!isNaN(idx) && idx >= 0 && idx < available.length) ? available[idx].name : choice.trim();
-  } else {
-    pn = window.prompt('No unassigned projects available. Enter a custom project name:');
-  }
-  if (!pn || !pn.trim()) return;
-  pn = pn.trim();
+  var picker = document.createElement('div');
+  picker.id = 'ts-proj-picker';
+  picker.className = 'ts-proj-picker';
 
-  if (inGrid.indexOf(pn) > -1) { toast('That project is already in the grid', 'error'); return; }
-  var tbody = document.getElementById('ts-tbody');
-  if (tbody) {
-    tbody.insertAdjacentHTML('beforeend', buildTsProjectRow(pn, days, {}, savedSts));
-    tsSaveState();
+  if (!available.length) {
+    picker.innerHTML = '<div class="ts-proj-picker-empty">All your assigned projects are already added.</div>';
+  } else {
+    available.forEach(function(p) {
+      var btn = document.createElement('button');
+      btn.className = 'ts-proj-picker-item';
+      btn.textContent = p.name;
+      btn.onclick = function() {
+        picker.remove();
+        var tbody = document.getElementById('ts-tbody');
+        if (tbody) {
+          tbody.insertAdjacentHTML('beforeend', buildTsProjectRow(p.name, days, {}, savedSts));
+          tsSaveState();
+          updateTsProgress();
+        }
+      };
+      picker.appendChild(btn);
+    });
   }
+
+  // Position below the Add Project button
+  var addBtn = document.querySelector('.ts-add-proj-btn');
+  if (addBtn) {
+    var rect = addBtn.getBoundingClientRect();
+    picker.style.top  = (rect.bottom + window.scrollY + 6) + 'px';
+    picker.style.left = rect.left + 'px';
+  }
+
+  document.body.appendChild(picker);
+
+  setTimeout(function() {
+    document.addEventListener('click', function closePicker(e) {
+      if (!picker.contains(e.target) && !addBtn.contains(e.target)) {
+        picker.remove();
+        document.removeEventListener('click', closePicker);
+      }
+    });
+  }, 50);
 }
 
 function removeTsProjectRow(btn) {
