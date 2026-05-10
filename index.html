@@ -2500,7 +2500,7 @@ function collectTsEntries() {
   var byDate = {};
   document.querySelectorAll('.ts-hours-inp:not(:disabled)').forEach(function(inp) {
     var date = inp.dataset.date, proj = inp.dataset.proj, hours = parseFloat(inp.value)||0;
-    if (!hours) return;
+    if (!hours || !proj) return;
     if (!byDate[date]) byDate[date] = {tasks:[], total:0};
     byDate[date].tasks.push({task:proj, hours:hours});
     byDate[date].total += hours;
