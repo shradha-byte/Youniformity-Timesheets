@@ -3858,6 +3858,15 @@ function renderTimesheetGrid() {
   var savedRows   = state.rows    || {};
   var savedSts    = state.statuses || {};
 
+  // Build set of leave dates from submitted requests (pending or approved — not rejected)
+  var leaveDates = {};
+  var myLeaves = JSON.parse(localStorage.getItem('yt_leaves_'+currentUser.name) || '[]');
+  myLeaves.forEach(function(l) {
+    if (l.status === 'rejected') return;
+    var cur = new Date(l.from+'T12:00:00'), end = new Date(l.to+'T12:00:00');
+    while (cur <= end) { leaveDates[cur.toISOString().slice(0,10)] = true; cur.setDate(cur.getDate()+1); }
+  });
+
   // Build project name list: assigned + any extra in saved state
   var projNames = projs.map(function(p){ return p.name; });
   Object.keys(savedRows).forEach(function(pn){ if (projNames.indexOf(pn) < 0) projNames.push(pn); });
@@ -3879,8 +3888,10 @@ function renderTimesheetGrid() {
   days.forEach(function(d) {
     var ds   = d.toISOString().slice(0,10);
     var isHol = !!HOLIDAYS[ds];
-    var def  = isHol ? 'holiday' : 'present';
-    var st   = savedSts[ds] !== undefined ? savedSts[ds] : def;
+    var def   = isHol ? 'holiday' : 'present';
+    var saved = savedSts[ds] !== undefined ? savedSts[ds] : def;
+    // Leave requests (pending/approved) always override the draft; rejected leaves reset to default
+    var st = leaveDates[ds] ? 'leave' : (saved === 'leave' ? def : saved);
     var opts = ['present','wfh','leave','holiday'].map(function(s){
       return '<option value="'+s+'"'+(st===s?' selected':'')+'>'+{present:'Present',wfh:'WFH',leave:'Leave',holiday:'Holiday'}[s]+'</option>';
     }).join('');
