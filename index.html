@@ -1839,7 +1839,7 @@ var DEMO_USERS = [
   {name:'Aarsh Bhatia',    email:'aarsh@youniformity.co.in',       dept:'Client Success',      type:'Full-time', role:'manager',  reportsTo:'Mamta Kumar',    gender:'male'},
   {name:'Shradha Prakash', email:'shradha@youniformity.co.in',     dept:'Consulting & Delivery',type:'Full-time',role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
   {name:'Runjhun Bhatia',  email:'runjhun@youniformity.co.in',     dept:'Marketing & Brand',   type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'female'},
-  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'manager',  reportsTo:'Achraj Prakash', gender:'male'},
+  {name:'Anhad Seth',      email:'anhad@youniformity.co.in',       dept:'Business Development',type:'Full-time', role:'employee', reportsTo:'Achraj Prakash', gender:'male'},
   {name:'Nandini',         email:'nandini@youniformity.co.in',     dept:'Technology & AI',     type:'Intern',    role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
   {name:'Nusrath',         email:'nusrath@youniformity.co.in',     dept:'Consulting & Delivery',type:'Intern',   role:'intern',   reportsTo:'Shradha Prakash', gender:'female'},
   {name:'Dhairya Jain',    email:'dhairya@youniformity.co.in',     dept:'Marketing & Brand',   type:'Intern',    role:'intern',   reportsTo:'Runjhun Bhatia',  gender:'male'}
@@ -3863,7 +3863,13 @@ function renderTimesheetGrid() {
   var myLeaves = JSON.parse(localStorage.getItem('yt_leaves_'+currentUser.name) || '[]');
   myLeaves.forEach(function(l) {
     if (l.status === 'rejected') return;
-    var cur = new Date(l.from+'T12:00:00'), end = new Date(l.to+'T12:00:00');
+    var fromStr = l.from && l.from !== 'na' ? l.from : null;
+    var toStr   = l.to   && l.to   !== 'na' ? l.to   : fromStr;
+    if (!fromStr) return;
+    // Use T00:00:00 (midnight local) so dates produce the same UTC ISO key as the days array
+    var cur = new Date(fromStr+'T00:00:00'), end = new Date(toStr+'T00:00:00');
+    if (isNaN(cur.getTime())) return;
+    if (isNaN(end.getTime())) end = cur;
     while (cur <= end) { leaveDates[cur.toISOString().slice(0,10)] = true; cur.setDate(cur.getDate()+1); }
   });
 
@@ -4287,10 +4293,9 @@ function updateRoleNav() {
   var role = currentUser ? currentUser.role : 'employee';
   var isManager = (role === 'manager' || role === 'admin');
   var isAdmin   = (role === 'admin');
-  var canManage = currentUser && PROJECT_MANAGERS.indexOf(currentUser.name) > -1;
   var mgrSec   = document.getElementById('mgr-section');
   var adminSec = document.getElementById('admin-section');
-  if (mgrSec)   mgrSec.style.display   = canManage ? '' : 'none';
+  if (mgrSec)   mgrSec.style.display   = isManager ? '' : 'none';
   if (adminSec) adminSec.style.display  = isAdmin   ? '' : 'none';
   var newProjBtn = document.getElementById('btn-new-project-self');
   if (newProjBtn) newProjBtn.style.display = (role !== 'intern') ? '' : 'none';
